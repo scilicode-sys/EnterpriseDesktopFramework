@@ -123,7 +123,7 @@ public sealed class DesignTimeDbContextFactoryTests : IDisposable
             .OrderBy(n => n, StringComparer.Ordinal)
             .ToArray();
 
-        Assert.Equal(new[] { "Comptes" }, tables);
+        Assert.Equal(new[] { "Comptes", "Exemples" }, tables);
     }
 
     private void EcrireReglages(string json)

@@ -69,6 +69,7 @@ public partial class App : Application
 
                 services.AddTransient<LoginViewModel>();
                 services.AddTransient<DashboardViewModel>();
+                services.AddTransient<ExempleViewModel>();
                 services.AddSingleton<ShellViewModel>();
                 services.AddTransient<ConnectionConfigViewModel>();
 

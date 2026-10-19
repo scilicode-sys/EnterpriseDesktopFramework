@@ -47,14 +47,21 @@ copier/renommer →  entités + contexte →   migrations + synchro →  premier
    Nouvelle table du produit ? `dotnet ef migrations add AjoutEleves --project
    Framework.Data --startup-project Framework.WPF`, puis dans la migration :
    `migrationBuilder.Sql(SyncNotifySql.Script("framework_sync", new[] { "Eleves" }));`
+   **Attention** : `migrations remove` + `migrations add` écrase le SQL du
+   trigger ajouté à la main dans `Initial` — le remettre dans la foulée, sinon
+   les postes ne se notifieront plus rien et rien ne le dira à l'écran.
    Sans `--project`, l'outil cherche les migrations dans le projet de démarrage
    et l'applications hôte (Hosting) échoue à charger `App.xaml` : préciser
    `Framework.Data`.
-4. **30 min — premier écran.** `ElevesViewModel` (ObservableObject) avec
-   `IUnitOfWork` transitoire + `uow.Repository<Eleve>()` ; ajouter la
-   `NavigationItem` dans `ShellViewModel.Items`, le `DataTemplate` dans
-   `App.xaml`, la View ; s'abonner à `ExternalEntityChangedMessage`
-   (**WeakReferenceMessenger uniquement** — le pont est déjà posé dans `App`).
+4. **30 min — premier écran.** Copier les **trois fichiers déjà livrés** plutôt
+   que de les réinventer : `Framework.Data/Entities/ExempleEntity.cs` (+ sa
+   configuration et son `DbSet`), `Framework.WPF/ViewModels/ExempleViewModel.cs`,
+   `Framework.WPF/Views/ExempleView.xaml`. Ils portent déjà liste filtrable,
+   formulaire création/modification, suppression logique et recharge temps réel
+   sur `ExternalEntityChangedMessage` — **WeakReferenceMessenger uniquement**
+   (le pont est déjà posé dans `App`). Trois branchements à refaire à la main :
+   la `NavigationItem` dans `ShellViewModel.Items`, le `DataTemplate` dans
+   `App.xaml`, l'enregistrement `AddTransient` du ViewModel dans `App.xaml.cs`.
 5. **Licence du poste.** L'éditeur émet le code :
    `OfflineLicenseEngine.Emettre(cleSecrete, produit, hwidClient, expiration)` ;
    le poste active : `ILicenseService.Activate(code, client)`.
@@ -69,7 +76,7 @@ Framework.sln
 ├── Framework.Data      net8.0          EF Core 9 + Npgsql — sans UI
 ├── Framework.Common    net8.0-windows  réglages, chiffrement, licence, Velopack, Sentry, PDF/CSV
 ├── Framework.WPF       net8.0-windows  shell : hôte DI, navigation, thème, écrans
-└── Framework.Tests     net8.0-windows  106 tests xUnit — sans base de données réelle
+└── Framework.Tests     net8.0-windows  121 tests xUnit — sans base de données réelle
 ```
 
 Dépendances toujours dans ce sens : `WPF → Common → Core` et `WPF → Data → Core`.
@@ -88,6 +95,7 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
 | Data | `PostgresSyncListener` | LISTEN/NOTIFY hors pool, battement de cœur 30 s, backoff 1→30 s, anti-écho `sender` |
 | Data | `SyncNotifySql` | fonction plpgsql + trigger AFTER I/U/D par table |
 | Data | `Design/DesignTimeDbContextFactory` + `Migrations/` | **migration `Initial` fournie** (table `Comptes` + trigger de synchro) : l'outil EF lit les réglages de l'assistant, même chaîne d'anti-écho |
+| Data | `ExempleEntity` + `ExempleEntityConfiguration` | table de démonstration du CRUD (libellé, catégorie, montant, note) — à supprimer avec l'écran « Exemples » |
 | Data | `AuthService` | session + anti-force-brute (3 échecs → gel 60 s via `IHorloge`), amorce du premier compte |
 | Common | `JsonSettingsService` | `%LocalAppData%\{AppName}\settings.json`, atomique, fichier cabossé = redémarrage à vide |
 | Common | `EncryptionService` | clé AES-256-GCM par machine sous DPAPI, blocs + AAD (nonce+index), `Protect/Unprotect` |
@@ -103,8 +111,9 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
 | WPF | `App.xaml.cs` | composition root ; Velopack en toute première ligne ; ouverture **automatique de l'assistant réseau** si le poste n'est pas configuré |
 | WPF | `ThemeService` / `NavigationService` / `ShellViewModel` | thème à chaud + accent persisté ; pile de types résolue en DI ; sidebar rétractable |
 | WPF | `ConnectionConfigWindow` | **assistant réseau autonome** : test, création de base, enregistrement — premier écran d'un poste neuf |
-| Tests | `Framework.Tests` | hachage, chiffrement (fichier + DPAPI), licence/HWID complète, réglages, CSV/PDF, resolver + assistant, `AuthService` (gel inclus) sur EF InMemory, fabrique de conception (migrations) |
-| CI | `.github/workflows/framework-ci.yml` | windows-latest : Release build + 106 tests sur tout push touchant le framework |
+| WPF | `ExempleViewModel` + `ExempleView` | **écran CRUD de référence** : liste filtrable, formulaire, suppression logique, Unit of Work par opération, recharge sur notification d'un autre poste |
+| Tests | `Framework.Tests` | hachage, chiffrement (fichier + DPAPI), licence/HWID complète, réglages, CSV/PDF, resolver + assistant, `AuthService` (gel inclus) sur EF InMemory, fabrique de conception (migrations), écran CRUD de référence |
+| CI | `.github/workflows/framework-ci.yml` | windows-latest : Release build + 121 tests sur tout push touchant le framework |
 
 ## 2. Règles permanentes du framework
 
@@ -164,6 +173,9 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
 
 - **Rôles et permissions** : `CompteEntity.Role` est une chaîne libre ; la
   matrice est la première règle métier du produit.
-- **Écrans CRUD** : le shell fournit la mécanique, le produit écrit ses vues.
+- **Écrans CRUD** : le shell fournit la mécanique et **un écran de référence**
+  (`ExempleViewModel` + `ExempleView` + `ExempleEntity` + sa ligne dans la
+  migration `Initial`). Le produit le copie, le renomme, puis supprime les
+  trois fichiers et la table `Exemples` dès sa première vraie table métier.
 - **Secret de licence** : l'éditeur du produit tient SA clé HMAC et génère les
   codes d'activation avec `OfflineLicenseEngine.Emettre` (outil distributeur).

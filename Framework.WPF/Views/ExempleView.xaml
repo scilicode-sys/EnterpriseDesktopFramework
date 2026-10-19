@@ -1,0 +1,109 @@
+<UserControl x:Class="Framework.WPF.Views.ExempleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FontFamily="{DynamicResource Font.App}">
+
+    <Grid Margin="24">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="340" />
+        </Grid.ColumnDefinitions>
+
+        <!-- ===================== LISTE ===================== -->
+        <DockPanel Grid.Column="0" Margin="0,0,18,0">
+
+            <Border DockPanel.Dock="Top" Padding="0,0,0,12">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox Grid.Column="0" Style="{StaticResource ChampTexte}"
+                             Text="{Binding Filtre, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <Button Grid.Column="1" Content="Actualiser"
+                            Style="{StaticResource BoutonDiscret}" Margin="10,0,0,0"
+                            Command="{Binding RechargerCommand}" />
+
+                    <Button Grid.Column="2" Content="Nouvelle ligne"
+                            Style="{StaticResource BoutonPrimaire}" Margin="10,0,0,0"
+                            Command="{Binding NouveauCommand}" />
+                </Grid>
+            </Border>
+
+            <TextBlock DockPanel.Dock="Bottom" Text="{Binding Etat}"
+                       FontSize="12" Margin="0,10,0,0"
+                       Foreground="{DynamicResource Brush.TextSecondaire}" />
+
+            <DataGrid ItemsSource="{Binding Lignes}"
+                      SelectedItem="{Binding LigneSelectionnee, Mode=TwoWay}"
+                      AutoGenerateColumns="False" IsReadOnly="True"
+                      HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                      CanUserResizeRows="False" SelectionMode="Single"
+                      Background="{DynamicResource Brush.Surface}"
+                      BorderBrush="{DynamicResource Brush.Border}"
+                      RowBackground="{DynamicResource Brush.Surface}"
+                      AlternatingRowBackground="{DynamicResource Brush.Window}"
+                      Foreground="{DynamicResource Brush.Text}"
+                      HorizontalGridLinesBrush="{DynamicResource Brush.Border}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Libellé" Binding="{Binding Libelle}" Width="*" />
+                    <DataGridTextColumn Header="Catégorie" Binding="{Binding Categorie}" Width="150" />
+                    <DataGridTextColumn Header="Montant" Binding="{Binding MontantAffiche}" Width="110" />
+                    <DataGridTextColumn Header="Dernière modification"
+                                        Binding="{Binding DerniereModification}" Width="170" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </DockPanel>
+
+        <!-- ===================== FORMULAIRE ===================== -->
+        <Border Grid.Column="1" Padding="18" VerticalAlignment="Top"
+                Background="{DynamicResource Brush.Surface}"
+                BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
+                CornerRadius="8">
+
+            <StackPanel>
+                <TextBlock Text="{Binding LibelleFormulaire}" FontSize="15" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Brush.Text}" />
+
+                <TextBlock Text="Libellé" FontSize="12" Margin="0,16,0,4"
+                           Foreground="{DynamicResource Brush.TextSecondaire}" />
+                <TextBox Style="{StaticResource ChampTexte}"
+                         Text="{Binding Libelle, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Text="Catégorie" FontSize="12" Margin="0,12,0,4"
+                           Foreground="{DynamicResource Brush.TextSecondaire}" />
+                <TextBox Style="{StaticResource ChampTexte}"
+                         Text="{Binding Categorie, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Text="Montant" FontSize="12" Margin="0,12,0,4"
+                           Foreground="{DynamicResource Brush.TextSecondaire}" />
+                <TextBox Style="{StaticResource ChampTexte}"
+                         Text="{Binding Montant, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Text="Note" FontSize="12" Margin="0,12,0,4"
+                           Foreground="{DynamicResource Brush.TextSecondaire}" />
+                <TextBox Style="{StaticResource ChampTexte}" Height="64"
+                         TextWrapping="Wrap" AcceptsReturn="True"
+                         VerticalScrollBarVisibility="Auto"
+                         Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Text="{Binding MessageErreur}"
+                           Foreground="{DynamicResource Brush.Danger}"
+                           FontSize="12" TextWrapping="Wrap" Margin="0,12,0,0"
+                           Visibility="{Binding MessageErreur, Converter={StaticResource TexteVersVisibilite}}" />
+
+                <Button Content="Enregistrer" Command="{Binding EnregistrerCommand}"
+                        Style="{StaticResource BoutonPrimaire}" Margin="0,18,0,0"
+                        IsEnabled="{Binding EstOccupe, Converter={StaticResource InverseBooleen}}" />
+
+                <Button Content="Supprimer la ligne" Command="{Binding SupprimerCommand}"
+                        Style="{StaticResource BoutonDiscret}" Margin="0,8,0,0"
+                        Foreground="{DynamicResource Brush.Danger}"
+                        IsEnabled="{Binding EstEnEdition}" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

@@ -14,6 +14,9 @@ public class FrameworkDbContext : DbContext
 {
     public DbSet<CompteEntity> Comptes => Set<CompteEntity>();
 
+    /// <summary>Table de démonstration du CRUD : à supprimer avec l'écran « Exemples ».</summary>
+    public DbSet<ExempleEntity> Exemples => Set<ExempleEntity>();
+
     public FrameworkDbContext(DbContextOptions<FrameworkDbContext> options)
         : base(options)
     {

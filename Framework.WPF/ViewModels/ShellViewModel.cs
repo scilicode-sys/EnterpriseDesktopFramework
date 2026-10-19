@@ -69,6 +69,7 @@ public partial class ShellViewModel : ObservableObject, IRecipient<ExternalEntit
         Items = new[]
         {
             new NavigationItem("Tableau de bord", "", typeof(DashboardViewModel)),
+            new NavigationItem("Exemples", "", typeof(ExempleViewModel)),
         };
 
         _navigation.CurrentViewModelChanged += (_, type) =>
