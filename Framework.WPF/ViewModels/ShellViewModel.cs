@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Framework.Core.Auth;
 using Framework.Core.Navigation;
+using Framework.Core.Rbac;
 using Framework.Core.Sync;
 using Framework.Core.Theming;
 using Framework.WPF.Messages;
@@ -24,8 +25,13 @@ public partial class ShellViewModel : ObservableObject, IRecipient<ExternalEntit
     private readonly INavigationService _navigation;
     private readonly IThemeService _theme;
     private readonly IAuthService _auth;
+    private readonly IAutorisationService _autorisation;
 
-    public IReadOnlyList<NavigationItem> Items { get; }
+    private readonly NavigationItem[] _tousLesItems;
+
+    /// <summary>Barre latérale réellement visible : la matrice de droits en décide à chaque changement de session.</summary>
+    [ObservableProperty]
+    private IReadOnlyList<NavigationItem> _items = Array.Empty<NavigationItem>();
 
     [ObservableProperty]
     private NavigationItem? _itemSelectionne;
@@ -60,16 +66,19 @@ public partial class ShellViewModel : ObservableObject, IRecipient<ExternalEntit
     public ShellViewModel(
         NavigationService navigation,
         IThemeService theme,
-        IAuthService auth)
+        IAuthService auth,
+        IAutorisationService autorisation)
     {
         _navigation = navigation;
         _theme = theme;
         _auth = auth;
+        _autorisation = autorisation;
 
-        Items = new[]
+        _tousLesItems = new[]
         {
             new NavigationItem("Tableau de bord", "", typeof(DashboardViewModel)),
-            new NavigationItem("Exemples", "", typeof(ExempleViewModel)),
+            new NavigationItem("Exemples", "", typeof(ExempleViewModel), Droits.ExemplesConsulter),
+            new NavigationItem("Rôles et permissions", "", typeof(DroitsViewModel), Droits.DroitsConsulter),
         };
 
         _navigation.CurrentViewModelChanged += (_, type) =>
@@ -79,14 +88,14 @@ public partial class ShellViewModel : ObservableObject, IRecipient<ExternalEntit
             synchroniserSelection(type);
         };
 
-        _auth.AuthenticationStateChanged += (_, utilisateur) => afficherUtilisateur(utilisateur);
-        afficherUtilisateur(_auth.CurrentUser);
+        _auth.AuthenticationStateChanged += (_, utilisateur) => changerSession(utilisateur);
+
+        // Le shell est singleton : la barre latérale est donc recalculée à chaque
+        // session. Sans cela, un poste qui ferme une session Administrateur puis
+        // ouvre une session Lecteur conserverait les écrans écrits du premier.
+        changerSession(_auth.CurrentUser);
 
         WeakReferenceMessenger.Default.Register(this);
-
-        // Écran initial du shell.
-        _navigation.Reset(typeof(DashboardViewModel));
-        ItemSelectionne = Items[0];
     }
 
     public void Receive(ExternalEntityChangedMessage message)
@@ -141,6 +150,37 @@ public partial class ShellViewModel : ObservableObject, IRecipient<ExternalEntit
         }
     }
 
+    private void changerSession(AppUser? utilisateur)
+    {
+        NomUtilisateur = utilisateur?.NomComplet ?? "(hors session)";
+        RoleUtilisateur = utilisateur?.Role ?? string.Empty;
+
+        Items = _tousLesItems
+            .Where(item => item.PermissionRequise is null || _autorisation.Peut(item.PermissionRequise))
+            .ToArray();
+
+        realignerEcran();
+    }
+
+    /// <summary>L'écran demandé doit être dans la barre latérale, sinon premier écran autorisé.</summary>
+    private void realignerEcran()
+    {
+        var courant = Items.FirstOrDefault(item => item.Cible == _navigation.CurrentViewModelType);
+
+        if (courant is not null)
+        {
+            ItemSelectionne = courant;
+            TitreCourant = courant.Libelle;
+            return;
+        }
+
+        if (Items.Count > 0)
+        {
+            _navigation.Reset(Items[0].Cible);
+            ItemSelectionne = Items[0];
+        }
+    }
+
     private void synchroniserSelection(Type? type)
     {
         var correspondant = Items.FirstOrDefault(item => item.Cible == type);
@@ -154,11 +194,5 @@ public partial class ShellViewModel : ObservableObject, IRecipient<ExternalEntit
         {
             TitreCourant = correspondant.Libelle;
         }
-    }
-
-    private void afficherUtilisateur(AppUser? utilisateur)
-    {
-        NomUtilisateur = utilisateur?.NomComplet ?? "(hors session)";
-        RoleUtilisateur = utilisateur?.Role ?? string.Empty;
     }
 }

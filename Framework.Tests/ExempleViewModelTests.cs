@@ -1,6 +1,7 @@
 using System.Globalization;
 using Framework.Core.Data;
 using Framework.Core.Notifications;
+using Framework.Core.Rbac;
 using Framework.Core.Sync;
 using Framework.Data;
 using Framework.Data.Entities;
@@ -12,16 +13,17 @@ using Xunit;
 namespace Framework.Tests;
 
 /// <summary>
-/// Écran CRUD de référence : validations, écritures par Unit of Work,
-/// suppression logique réelle en base, et rafraîchissement temps réel déclenché
-/// par une notification d'un autre poste. EF InMemory suffit — le SQL reste
-/// l'affaire des postes, comme pour AuthServiceTests.
+/// Écran CRUD de référence : validations, écritures par Unit of Work, suppression
+/// logique réelle en base, rafraîchissement temps réel déclenché par une notification
+/// d'un autre poste, et portes de la matrice de droits. EF InMemory suffit — le SQL
+/// reste l'affaire des postes, comme pour AuthServiceTests.
 /// </summary>
 public sealed class ExempleViewModelTests : IDisposable
 {
     private readonly DbContextOptions<FrameworkDbContext> _options;
     private readonly ServiceProvider _portes;
     private readonly AlertesEnMemoire _alertes = new();
+    private readonly FakeSession _session = new(MatriceParDefaut.Administrateur);
 
     public ExempleViewModelTests()
     {
@@ -38,7 +40,19 @@ public sealed class ExempleViewModelTests : IDisposable
 
     public void Dispose() => _portes.Dispose();
 
-    private ExempleViewModel creerEcran() => new(_portes.GetRequiredService<IServiceScopeFactory>(), _alertes);
+    /// <summary>Session Administrateur par défaut ; les refus se testent en changeant le rôle.</summary>
+    private ExempleViewModel creerEcran(string? role = null)
+    {
+        if (role is not null)
+        {
+            _session.SeConnecter(role);
+        }
+
+        return new ExempleViewModel(
+            _portes.GetRequiredService<IServiceScopeFactory>(),
+            _alertes,
+            new AutorisationService(_session, MatriceParDefaut.Creer()));
+    }
 
     private async Task semerAsync(params ExempleEntity[] entites)
     {
@@ -328,6 +342,76 @@ public sealed class ExempleViewModelTests : IDisposable
         await ecran.EnregistrerCommand.ExecuteAsync(null);
 
         Assert.Contains("disparu", ecran.MessageErreur, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Enregistrer_RoleLecteur_RefuseEtRienECrit()
+    {
+        var ecran = creerEcran(MatriceParDefaut.Lecteur);
+        ecran.Libelle = "Alpha";
+        ecran.Categorie = "Stock";
+
+        await ecran.EnregistrerCommand.ExecuteAsync(null);
+
+        Assert.Contains("Droits insuffisants", ecran.MessageErreur, StringComparison.Ordinal);
+        Assert.Empty(await toutesEnBaseAsync());
+    }
+
+    [Fact]
+    public async Task Supprimer_RoleLecteur_RejetEtLaLigneSurvit()
+    {
+        var graine = exemple("Alpha", "Stock");
+        await semerAsync(graine);
+
+        var ecran = creerEcran(MatriceParDefaut.Lecteur);
+        await ecran.ChargerAsync();
+        ecran.LigneSelectionnee = ecran.Lignes.Single();
+
+        await ecran.SupprimerCommand.ExecuteAsync(null);
+
+        Assert.Contains("Droits insuffisants", ecran.MessageErreur, StringComparison.Ordinal);
+
+        var enBase = await lireEnBaseAsync(graine.Id);
+        Assert.NotNull(enBase);
+        Assert.False(enBase.IsDeleted);
+    }
+
+    [Fact]
+    public async Task Charger_HorsSession_AucuneLigneEtLeRefusLeDit()
+    {
+        await semerAsync(exemple("Alpha", "Stock"));
+        _session.FermerSession();
+
+        var ecran = creerEcran();
+        await ecran.ChargerAsync();
+
+        Assert.Empty(ecran.Lignes);
+        Assert.Contains("Droits insuffisants", ecran.Etat, StringComparison.Ordinal);
+        Assert.Contains("(hors session)", ecran.Etat, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Boutons_DependentDuDroitEtNonDeLaSelection()
+    {
+        await semerAsync(exemple("Alpha", "Stock"));
+
+        var lecteur = creerEcran(MatriceParDefaut.Lecteur);
+        await lecteur.ChargerAsync();
+        lecteur.LigneSelectionnee = lecteur.Lignes.Single();
+
+        Assert.False(lecteur.PeutEcrire);
+        Assert.False(lecteur.PeutSupprimer);
+        Assert.False(lecteur.BoutonEnregistrerActif);
+        // Lecture seule : le formulaire est bien en édition, seul le droit manque.
+        Assert.True(lecteur.EstEnEdition);
+
+        var administrateur = creerEcran(MatriceParDefaut.Administrateur);
+        await administrateur.ChargerAsync();
+        administrateur.LigneSelectionnee = administrateur.Lignes.Single();
+
+        Assert.True(administrateur.PeutEcrire);
+        Assert.True(administrateur.BoutonEnregistrerActif);
+        Assert.True(administrateur.BoutonSupprimerActif);
     }
 
     private sealed class FabriqueContexte : IDbContextFactory<FrameworkDbContext>

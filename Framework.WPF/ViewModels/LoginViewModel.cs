@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Framework.Core.Auth;
 using Framework.Core.Notifications;
+using Framework.Core.Rbac;
 
 namespace Framework.WPF.ViewModels;
 
@@ -95,7 +96,7 @@ public partial class LoginViewModel : ObservableObject
                 }
 
                 resultat = await _auth.CreerPremierCompteAsync(
-                    Identifiant.Trim(), NomComplet.Trim(), "Administrateur", MotDePasse);
+                    Identifiant.Trim(), NomComplet.Trim(), MatriceParDefaut.Administrateur, MotDePasse);
 
                 if (!resultat.IsSuccess)
                 {

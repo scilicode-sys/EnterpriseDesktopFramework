@@ -60,9 +60,15 @@ copier/renommer →  entités + contexte →   migrations + synchro →  premier
    formulaire création/modification, suppression logique et recharge temps réel
    sur `ExternalEntityChangedMessage` — **WeakReferenceMessenger uniquement**
    (le pont est déjà posé dans `App`). Trois branchements à refaire à la main :
-   la `NavigationItem` dans `ShellViewModel.Items`, le `DataTemplate` dans
-   `App.xaml`, l'enregistrement `AddTransient` du ViewModel dans `App.xaml.cs`.
-5. **Licence du poste.** L'éditeur émet le code :
+   la `NavigationItem` (avec sa permission) dans `ShellViewModel._tousLesItems`,
+   le `DataTemplate` dans `App.xaml`, l'enregistrement `AddTransient` du ViewModel
+   dans `App.xaml.cs`.
+5. **Droits du produit.** Éditer `Framework.Core/Rbac/MatriceParDefaut.cs` (ou
+   mieux : `new MatriceRoles(...)` propre au produit à la composition root) et
+   déclarer les permissions dans `Droits` sous la convention `module.verbe`.
+   Une écriture se garde avec `_autorisation.Exiger(...)` **dans la commande**,
+   pas seulement dans la vue.
+6. **Licence du poste.** L'éditeur émet le code :
    `OfflineLicenseEngine.Emettre(cleSecrete, produit, hwidClient, expiration)` ;
    le poste active : `ILicenseService.Activate(code, client)`.
 
@@ -76,7 +82,7 @@ Framework.sln
 ├── Framework.Data      net8.0          EF Core 9 + Npgsql — sans UI
 ├── Framework.Common    net8.0-windows  réglages, chiffrement, licence, Velopack, Sentry, PDF/CSV
 ├── Framework.WPF       net8.0-windows  shell : hôte DI, navigation, thème, écrans
-└── Framework.Tests     net8.0-windows  121 tests xUnit — sans base de données réelle
+└── Framework.Tests     net8.0-windows  162 tests xUnit — sans base de données réelle
 ```
 
 Dépendances toujours dans ce sens : `WPF → Common → Core` et `WPF → Data → Core`.
@@ -88,6 +94,9 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
 | Core | `IGenericRepository<T>`, `IUnitOfWork` | dépôts génériques + frontière d'écriture unique |
 | Core | `ISyncNotificationService`, `SyncNotificationDto` | contrat temps réel inter-postes |
 | Core | `INavigationService`, `IThemeService`, `IAuthService`, `IHorloge`, `ISettingsService`, `IAlertService`, `ILicenseService` | transverses sans référence UI/DB |
+| Core | `Droits`, `RoleDefini`, `IMatriceRoles` / `MatriceRoles` | **RBAC générique** : permissions `module.verbe`, sauvageonne `*`, héritage aplati sans cycle, **rôle inconnu = zéro droit** |
+| Core | `MatriceParDefaut` | trois rôles de départ (Administrateur / Utilisateur / Lecteur) : le produit remplace, il ne commente pas |
+| Core | `IAutorisationService`, `AutorisationRefuseeException` | droits de la session courante : `Peut()` pour la vue, `Exiger()` pour l'écriture |
 | Core | `PasswordHasher` | PBKDF2-SHA256 150 000 itérations, temps constant |
 | Data | `FrameworkDbContext` | clés = `Id`, audit au SaveChanges, DELETE → suppression logique + filtre global, configurations par assembly |
 | Data | `GenericRepository<T>`, `UnitOfWork` | contexte privé par UoW, `ExecuteInTransactionAsync` sous `CreateExecutionStrategy` |
@@ -109,11 +118,12 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
 | Common | `TelemetrySentry` | amorçage optionnel par DSN, seuil Error+ |
 | Common | `GrowlAlertService` | notifications empilées, Dispatcher garanti |
 | WPF | `App.xaml.cs` | composition root ; Velopack en toute première ligne ; ouverture **automatique de l'assistant réseau** si le poste n'est pas configuré |
-| WPF | `ThemeService` / `NavigationService` / `ShellViewModel` | thème à chaud + accent persisté ; pile de types résolue en DI ; sidebar rétractable |
+| WPF | `ThemeService` / `NavigationService` / `ShellViewModel` | thème à chaud + accent persisté ; pile de types résolue en DI ; sidebar **filtrée par les droits de la session**, recalculée à chaque changement de personne |
 | WPF | `ConnectionConfigWindow` | **assistant réseau autonome** : test, création de base, enregistrement — premier écran d'un poste neuf |
-| WPF | `ExempleViewModel` + `ExempleView` | **écran CRUD de référence** : liste filtrable, formulaire, suppression logique, Unit of Work par opération, recharge sur notification d'un autre poste |
-| Tests | `Framework.Tests` | hachage, chiffrement (fichier + DPAPI), licence/HWID complète, réglages, CSV/PDF, resolver + assistant, `AuthService` (gel inclus) sur EF InMemory, fabrique de conception (migrations), écran CRUD de référence |
-| CI | `.github/workflows/framework-ci.yml` | windows-latest : Release build + 121 tests sur tout push touchant le framework |
+| WPF | `DroitsViewModel` + `DroitsView` | écran « Rôles et permissions » : la matrice déroulée, la session courante marquée, les rôles déclarés qui ne mènent à aucun écran signalés |
+| WPF | `ExempleViewModel` + `ExempleView` | **écran CRUD de référence** : liste filtrable, formulaire, suppression logique, Unit of Work par opération, recharge sur notification d'un autre poste, **boutons grisés par le droit ET par l'état** |
+| Tests | `Framework.Tests` | hachage, chiffrement (fichier + DPAPI), licence/HWID complète, réglages, CSV/PDF, resolver + assistant, `AuthService` (gel inclus) sur EF InMemory, fabrique de conception (migrations), écran CRUD de référence, **matrice RBAC + `AutorisationService` + gates des écrans** |
+| CI | `.github/workflows/framework-ci.yml` | windows-latest : Release build + 162 tests sur tout push touchant le framework |
 
 ## 2. Règles permanentes du framework
 
@@ -126,6 +136,11 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
   `.vs/` ne se committent jamais (`.gitignore` fourni).
 - **Un poste non installé sous Velopack n'est pas une anomalie** : le wrapper
   rend `null`, le poste tourne sans [ERR].
+- **Une vue n'est jamais une sécurité** : `Peut()` grise le bouton, `Exiger()`
+  refuse l'écriture dans la commande. Toute écriture du produit appelle les deux.
+- **Les droits se déclarent en code** (`MatriceParDefaut` ou la matrice du
+  produit) : un rôle lu en base que la matrice ne connaît pas donne zéro droit,
+  jamais un droit par défaut.
 
 ## 3. Pièges mesurés, déjà désamorcés
 
@@ -143,6 +158,10 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
   ViewModel par le code-behind à chaque frappe.
 - Toute clé de thème nouvelle doit exister dans `Light.xaml` **et** `Dark.xaml`
   et se consommer en `DynamicResource`.
+- **`AuthService` est singleton, pas transient** : il porte `CurrentUser` et
+  l'événement de session. En transient, le `ShellViewModel` (singleton) voyait
+  une autre instance que celle de la connexion — chip utilisateur vide et
+  **tous les droits refusés**, y compris pour un Administrateur.
 - `EnableRetryOnFailure` interdit les transactions « à la main » : passer par
   `ExecuteInTransactionAsync`.
 - Le **`sender` d'une notification est l'`Application Name`** (Npgsql rend la clé
@@ -171,8 +190,13 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
 
 ## 4. Ce que le cadre laisse au produit
 
-- **Rôles et permissions** : `CompteEntity.Role` est une chaîne libre ; la
-  matrice est la première règle métier du produit.
+- **Sa matrice de rôles** : les trois rôles du socle et les permissions
+  `exemples.*` / `rapports.*` / `comptes.gerer` sont un **départ**, pas une
+  politique. Le produit écrit `new MatriceRoles(...)` avec ses rôles à lui,
+  ajoute ses clefs dans sa propre classe de droits (même convention
+  `module.verbe`) et décide qui tient `*`. `CompteEntity.Role` reste une chaîne
+  libre : c'est la matrice qui lui donne une valeur, et un rôle qu'elle ne
+  connaît pas ne donne accès à rien — l'écran « Rôles et permissions » le dit.
 - **Écrans CRUD** : le shell fournit la mécanique et **un écran de référence**
   (`ExempleViewModel` + `ExempleView` + `ExempleEntity` + sa ligne dans la
   migration `Initial`). Le produit le copie, le renomme, puis supprime les

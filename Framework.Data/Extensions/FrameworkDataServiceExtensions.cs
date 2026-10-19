@@ -55,7 +55,12 @@ public static class FrameworkDataServiceExtensions
         });
 
         services.AddTransient<IUnitOfWork, UnitOfWork>();
-        services.AddTransient<IAuthService, AuthService>();
+
+        // Singleton VOLONTAIRE : CurrentUser est l'état de session du poste, pas
+        // celui d'une fenêtre. Transitoire, le shell singleton et la fenêtre de
+        // connexion auraient chacun leur propre session — l'écran resterait
+        // « hors session » après une connexion réussie, et le RBAC refuserait tout.
+        services.AddSingleton<IAuthService, AuthService>();
         services.AddSingleton<ISyncNotificationService>(provider => new PostgresSyncListener(
             provider.GetRequiredService<PostgresConnectionResolver>(),
             provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<PostgresSyncListener>>(),

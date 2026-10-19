@@ -10,7 +10,9 @@ namespace Framework.Data.Services;
 /// <summary>
 /// Authentification de session avec anti-force-brute : trois échecs consecutifs
 /// gèlent le compte soixante secondes. Toute lecture du temps passe par IHorloge.
-/// Transient dans la DI : jamais de session partagée par accident entre deux fenêtres.
+/// Résolu en singleton : <c>CurrentUser</c> est la session du poste, partagée par
+/// le shell, l'écran de connexion et l'autorisation — deux instances se
+/// contrediraient dès la première connexion.
 /// </summary>
 public sealed class AuthService : IAuthService
 {

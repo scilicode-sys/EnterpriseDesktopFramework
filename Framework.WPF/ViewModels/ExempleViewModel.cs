@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Framework.Core.Data;
 using Framework.Core.Notifications;
+using Framework.Core.Rbac;
 using Framework.Core.Sync;
 using Framework.Data.Entities;
 using Framework.WPF.Messages;
@@ -31,6 +32,7 @@ public partial class ExempleViewModel : ObservableObject, IRecipient<ExternalEnt
 
     private readonly IServiceScopeFactory _portes;
     private readonly IAlertService _alertes;
+    private readonly IAutorisationService _autorisation;
 
     public ObservableCollection<ExempleLigne> Lignes { get; } = new();
 
@@ -69,10 +71,21 @@ public partial class ExempleViewModel : ObservableObject, IRecipient<ExternalEnt
     /// <summary>Titre du formulaire — un seul texte, pas de chaîne de convertisseurs dans la vue.</summary>
     public string LibelleFormulaire => EstEnEdition ? "Modifier la ligne" : "Créer une ligne";
 
-    public ExempleViewModel(IServiceScopeFactory portes, IAlertService alertes)
+    /// <summary>Droits de la session, lu une fois ici : la vue grise ce qu'il faut.</summary>
+    public bool PeutEcrire => _autorisation.Peut(Droits.ExemplesModifier);
+
+    public bool PeutSupprimer => _autorisation.Peut(Droits.ExemplesSupprimer);
+
+    /// <summary>Un bouton actif = le droit ET l'état de l'écran : la vue ne compose pas deux liaisons.</summary>
+    public bool BoutonEnregistrerActif => !EstOccupe && PeutEcrire;
+
+    public bool BoutonSupprimerActif => EstEnEdition && PeutSupprimer;
+
+    public ExempleViewModel(IServiceScopeFactory portes, IAlertService alertes, IAutorisationService autorisation)
     {
         _portes = portes;
         _alertes = alertes;
+        _autorisation = autorisation;
 
         WeakReferenceMessenger.Default.Register(this);
     }
@@ -112,6 +125,11 @@ public partial class ExempleViewModel : ObservableObject, IRecipient<ExternalEnt
 
         try
         {
+            // La vue grise déjà le bouton ; ceci est la vraie garde : atteint par
+            // « retour », par raccourci ou par un autre ViewModel, un écrit sans la
+            // permission doit échouer ici, pas seulement disparaître de l'écran.
+            _autorisation.Exiger(Droits.ExemplesModifier);
+
             EstOccupe = true;
             MessageErreur = string.Empty;
 
@@ -154,6 +172,10 @@ public partial class ExempleViewModel : ObservableObject, IRecipient<ExternalEnt
             await unTravail.SaveChangesAsync();
             Nouveau();
         }
+        catch (AutorisationRefuseeException)
+        {
+            MessageErreur = Refus("enregistrer");
+        }
         catch (Exception ex)
         {
             MessageErreur = "Enregistrement impossible. Réessayez.";
@@ -179,6 +201,8 @@ public partial class ExempleViewModel : ObservableObject, IRecipient<ExternalEnt
 
         try
         {
+            _autorisation.Exiger(Droits.ExemplesSupprimer);
+
             EstOccupe = true;
             MessageErreur = string.Empty;
 
@@ -201,6 +225,10 @@ public partial class ExempleViewModel : ObservableObject, IRecipient<ExternalEnt
 
             Etat = $"« {cible.Libelle} » supprimée.";
             Nouveau();
+        }
+        catch (AutorisationRefuseeException)
+        {
+            MessageErreur = Refus("supprimer");
         }
         catch (Exception ex)
         {
@@ -236,6 +264,10 @@ public partial class ExempleViewModel : ObservableObject, IRecipient<ExternalEnt
         await rechargerAsync();
         Etat = "Liste rechargée : un autre poste a modifié la table « Exemples ».";
     }
+
+    partial void OnEstOccupeChanged(bool value) => OnPropertyChanged(nameof(BoutonEnregistrerActif));
+
+    partial void OnEstEnEditionChanged(bool value) => OnPropertyChanged(nameof(BoutonSupprimerActif));
 
     partial void OnLigneSelectionneeChanged(ExempleLigne? value)
     {
@@ -304,13 +336,25 @@ public partial class ExempleViewModel : ObservableObject, IRecipient<ExternalEnt
         return true;
     }
 
+    /// <summary>Phrase d'écran d'un refus : la clef de permission reste au journal, pas au poste de travail.</summary>
+    private string Refus(string action)
+        => $"Droits insuffisants pour {action} depuis ce poste (rôle « {_autorisation.RoleCourant ?? "(hors session)"} »).";
+
     private bool _rechargementEnCours;
 
     private async Task rechargerAsync()
     {
-        // Le filtre frappe à chaque frappe et l'autre poste à chaque notification :
-        // sans ce garde-fou, deux requêtes se marcheraient dessus et la liste
-        // finirait dans un état qui ne correspond à aucune des deux.
+        if (!_autorisation.Peut(Droits.ExemplesConsulter))
+        {
+            Lignes.Clear();
+            OnPropertyChanged(nameof(Total));
+            Etat = Refus("consulter cette liste");
+            return;
+        }
+
+        // Le bouton « Actualiser » et la notification d'un autre poste peuvent se
+        // croiser : sans ce garde-fou, deux requêtes se marcheraient dessus et la
+        // liste finirait dans un état qui ne correspond à aucune des deux.
         if (_rechargementEnCours)
         {
             return;

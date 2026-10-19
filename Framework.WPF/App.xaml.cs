@@ -5,6 +5,7 @@ using Framework.Common.Extensions;
 using Framework.Common.Telemetry;
 using Framework.Common.Update;
 using Framework.Core.Navigation;
+using Framework.Core.Rbac;
 using Framework.Core.Settings;
 using Framework.Core.Sync;
 using Framework.Core.Theming;
@@ -67,9 +68,15 @@ public partial class App : Application
 
                 services.AddSingleton<IThemeService, ThemeService>();
 
+                // RBAC : la matrice est une décision de conception, pas une table.
+                // Un produit dérivé remplace MatriceParDefaut.Creer() par la sienne.
+                services.AddSingleton<IMatriceRoles>(_ => MatriceParDefaut.Creer());
+                services.AddSingleton<IAutorisationService, AutorisationService>();
+
                 services.AddTransient<LoginViewModel>();
                 services.AddTransient<DashboardViewModel>();
                 services.AddTransient<ExempleViewModel>();
+                services.AddTransient<DroitsViewModel>();
                 services.AddSingleton<ShellViewModel>();
                 services.AddTransient<ConnectionConfigViewModel>();
 

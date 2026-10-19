@@ -97,12 +97,12 @@
 
                 <Button Content="Enregistrer" Command="{Binding EnregistrerCommand}"
                         Style="{StaticResource BoutonPrimaire}" Margin="0,18,0,0"
-                        IsEnabled="{Binding EstOccupe, Converter={StaticResource InverseBooleen}}" />
+                        IsEnabled="{Binding BoutonEnregistrerActif}" />
 
                 <Button Content="Supprimer la ligne" Command="{Binding SupprimerCommand}"
                         Style="{StaticResource BoutonDiscret}" Margin="0,8,0,0"
                         Foreground="{DynamicResource Brush.Danger}"
-                        IsEnabled="{Binding EstEnEdition}" />
+                        IsEnabled="{Binding BoutonSupprimerActif}" />
             </StackPanel>
         </Border>
     </Grid>
