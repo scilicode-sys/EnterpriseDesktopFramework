@@ -1,0 +1,72 @@
+<UserControl x:Class="Framework.WPF.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FontFamily="{DynamicResource Font.App}">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
+        <StackPanel MaxWidth="900" HorizontalAlignment="Left">
+
+            <TextBlock Text="Socle du framework" FontSize="16" FontWeight="SemiBold"
+                       Foreground="{DynamicResource Brush.Text}" />
+
+            <WrapPanel Margin="0,14,0,0">
+
+                <Border Width="270" Margin="0,0,14,14" Padding="16"
+                        Background="{DynamicResource Brush.Surface}"
+                        BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
+                        CornerRadius="8">
+                    <StackPanel>
+                        <TextBlock Text="Navigation" FontSize="13" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource Brush.Text}" />
+                        <TextBlock Text="Pile de ViewModels résolus dans la DI, templates implicites ViewModel → Vue."
+                                   FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"
+                                   Foreground="{DynamicResource Brush.TextSecondaire}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Width="270" Margin="0,0,14,14" Padding="16"
+                        Background="{DynamicResource Brush.Surface}"
+                        BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
+                        CornerRadius="8">
+                    <StackPanel>
+                        <TextBlock Text="Thème" FontSize="13" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource Brush.Text}" />
+                        <TextBlock Text="Palettes claire et sombre échangées à chaud, accent persisté dans les réglages."
+                                   FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"
+                                   Foreground="{DynamicResource Brush.TextSecondaire}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Width="270" Margin="0,0,14,14" Padding="16"
+                        Background="{DynamicResource Brush.Surface}"
+                        BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
+                        CornerRadius="8">
+                    <StackPanel>
+                        <TextBlock Text="Temps réel inter-postes" FontSize="13" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource Brush.Text}" />
+                        <TextBlock Text="PostgreSQL LISTEN/NOTIFY, anti-écho par poste, messager faible vers les écrans."
+                                   FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"
+                                   Foreground="{DynamicResource Brush.TextSecondaire}" />
+                    </StackPanel>
+                </Border>
+            </WrapPanel>
+
+            <Border Padding="16" Margin="0,0,14,0" MaxWidth="594" HorizontalAlignment="Left"
+                    Background="{DynamicResource Brush.Surface}"
+                    BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
+                    CornerRadius="8">
+                <StackPanel Orientation="Horizontal">
+                    <StackPanel>
+                        <TextBlock Text="Notifications reçues d'autres postes" FontSize="12"
+                                   Foreground="{DynamicResource Brush.TextSecondaire}" />
+                        <TextBlock Text="{Binding NotificationsRecues}" FontSize="24" FontWeight="Bold"
+                                   Foreground="{DynamicResource Brush.Accente}" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding DerniereActivite}" FontSize="12" MaxWidth="360"
+                               TextWrapping="Wrap" Margin="20,0,0,0" VerticalAlignment="Center"
+                               Foreground="{DynamicResource Brush.Text}" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

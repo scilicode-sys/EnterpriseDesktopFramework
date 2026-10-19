@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "dgSpecHash": "6/fHnlZ2Z0M=",
+  "success": true,
+  "projectFilePath": "D:\\Amine\\Desktop\\MonCabinetMedical - REV 18.3 Git\\MonCabinetMedical - REV 19.0 Git\\Framework\\Framework.Common\\Framework.Common.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Amine\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\9.0.10\\microsoft.extensions.dependencyinjection.abstractions.9.0.10.nupkg.sha512",
+    "C:\\Users\\Amine\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\9.0.10\\microsoft.extensions.logging.abstractions.9.0.10.nupkg.sha512",
+    "C:\\Users\\Amine\\.nuget\\packages\\sentry\\6.12.0\\sentry.6.12.0.nupkg.sha512",
+    "C:\\Users\\Amine\\.nuget\\packages\\system.diagnostics.diagnosticsource\\9.0.10\\system.diagnostics.diagnosticsource.9.0.10.nupkg.sha512",
+    "C:\\Users\\Amine\\.nuget\\packages\\system.security.cryptography.protecteddata\\9.0.8\\system.security.cryptography.protecteddata.9.0.8.nupkg.sha512",
+    "C:\\Users\\Amine\\.nuget\\packages\\velopack\\1.2.161\\velopack.1.2.161.nupkg.sha512"
+  ],
+  "logs": []
+}

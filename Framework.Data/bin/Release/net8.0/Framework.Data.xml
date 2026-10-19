@@ -1,0 +1,129 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Framework.Data</name>
+    </assembly>
+    <members>
+        <member name="T:Framework.Data.Entities.CompteEntity">
+            <summary>
+            Compte de connexion générique du framework (aucun métier attaché).
+            Le champ Rôle est une chaîne libre : c'est le projet dérivé qui définit
+            ses rôles et sa matrice de permissions.
+            </summary>
+        </member>
+        <member name="T:Framework.Data.Entities.EntityBase">
+            <summary>
+            Base pratique pour les entités d'un projet dérivé : GUID, audit et
+            suppression logique sont déjà là. Les conventions du contexte les reconnaît.
+            </summary>
+        </member>
+        <member name="T:Framework.Data.Extensions.FrameworkDataOptions">
+            <summary>Options d'installation du socle données.</summary>
+        </member>
+        <member name="P:Framework.Data.Extensions.FrameworkDataOptions.SyncChannel">
+            <summary>Canal LISTEN/NOTIFY partagé par tous les postes du produit.</summary>
+        </member>
+        <member name="M:Framework.Data.Extensions.FrameworkDataServiceExtensions.AddFrameworkData(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Action{Framework.Data.Extensions.FrameworkDataOptions})">
+            <summary>
+            Enregistre le socle données : resolver de connexion, fabrique de contexte
+            PostgreSQL résiliente, Unit of Work, service de session et écouteur de
+            synchronisation. Un projet dérivé remplace FrameworkDbContext par le sien
+            via la surcharge générique.
+            </summary>
+        </member>
+        <member name="M:Framework.Data.Extensions.FrameworkDataServiceExtensions.AddFrameworkData``1(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Action{Framework.Data.Extensions.FrameworkDataOptions})">
+            <summary>Même enregistrement, avec le contexte propre au projet dérivé.</summary>
+        </member>
+        <member name="T:Framework.Data.FrameworkDbContext">
+            <summary>
+            Contexte de base du framework : conventions génériques (clé = Id, audit
+            horodatée à chaque SaveChanges, suppression logique transparente) et
+            découverte des IEntityTypeConfiguration de l'assembly du contexte.
+            Un projet dérivé hérite de cette classe et y ajoute ses DbSet.
+            </summary>
+        </member>
+        <member name="M:Framework.Data.FrameworkDbContext.AppliquerConventions">
+            <summary>Horodatage d'audit et conversion des DELETE en suppression logique.</summary>
+        </member>
+        <member name="T:Framework.Data.Postgres.PostgresConnectionResolver">
+            <summary>
+            Source unique de la chaîne de connexion du framework. La fabrique
+            BuildConnectionString ne doit jamais être recopiée ailleurs.
+            </summary>
+        </member>
+        <member name="F:Framework.Data.Postgres.PostgresConnectionResolver.ClientSyncId">
+            <summary>
+            Identifiant du poste/processus, transmis à PostgreSQL via « Application Name ».
+            Le trigger de synchronisation l'inclut dans le payload (champ « sender »),
+            ce qui permet à l'écouteur d'ignorer ses propres écritures (anti-écho).
+            </summary>
+        </member>
+        <member name="M:Framework.Data.Postgres.PostgresConnectionResolver.TestConnectionAsync(Framework.Data.Postgres.PostgresConnectionSettings,System.Int32,System.Threading.CancellationToken,Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            Test sur des réglages non encore enregistrés (assistant réseau).
+            Ne lève jamais d'exception : le résultat porte le statut et le message.
+            </summary>
+        </member>
+        <member name="T:Framework.Data.Postgres.PostgresConnectionSettings">
+            <summary>
+            Paramètres de connexion PostgreSQL, persistés via ISettingsService.
+            Les champs d'identité sont vides **par conception** : sans réglages,
+            l'assistant réseau du poste les demande — aucun identifiant en dur ici.
+            </summary>
+        </member>
+        <member name="T:Framework.Data.Postgres.PgConnectionResult">
+            <summary>Résultat du test de connexion : statut + message français prêt pour l'écran.</summary>
+        </member>
+        <member name="T:Framework.Data.Postgres.PostgresSyncListener">
+            <summary>
+            Écoute des notifications inter-postes via PostgreSQL LISTEN/NOTIFY.
+            Connexion dédiée hors pool EF, battement de cœur sur WaitAsync pour
+            détecter une connexion morte, backoff exponentiel 1 s → 30 s, anti-écho
+            sur le champ « sender ». Les événements partent d'un fil d'arrière-plan :
+            la couche présentation maréchalise sur son Dispatcher.
+            </summary>
+        </member>
+        <member name="T:Framework.Data.Postgres.SyncNotifySql">
+            <summary>
+            Fabrique du SQL d'installation du canal de synchronisation : une fonction
+            plpgsql partagée + un trigger AFTER par table. À rejouer dans une migration
+            EF Core pour chaque table que le projet veut synchroniser entre postes.
+            </summary>
+        </member>
+        <member name="M:Framework.Data.Postgres.SyncNotifySql.FonctionTrigger(System.String)">
+            <summary>Fonction d'notif commune : le « sender » est l'Application Name de la connexion émettrice.</summary>
+        </member>
+        <member name="M:Framework.Data.Postgres.SyncNotifySql.TriggerTable(System.String)">
+            <summary>Trigger AFTER INSERT/UPDATE/DELETE sur une table (nom exact, tel que ToTable l'a posé).</summary>
+        </member>
+        <member name="M:Framework.Data.Postgres.SyncNotifySql.Script(System.String,System.Collections.Generic.IEnumerable{System.String})">
+            <summary>Script complet : fonction + un trigger par table fournie.</summary>
+        </member>
+        <member name="T:Framework.Data.Repositories.GenericRepository`1">
+            <summary>
+            Dépôt EF Core branché sur un DbSet. Aucune sauvegarde ici : l'Unit of Work
+            décide du moment du SaveChanges, la requête reste exprimable via Query().
+            </summary>
+        </member>
+        <member name="T:Framework.Data.Services.AuthService">
+            <summary>
+            Authentification de session avec anti-force-brute : trois échecs consecutifs
+            gèlent le compte soixante secondes. Toute lecture du temps passe par IHorloge.
+            Transient dans la DI : jamais de session partagée par accident entre deux fenêtres.
+            </summary>
+        </member>
+        <member name="M:Framework.Data.Services.AuthService.CreerPremierCompteAsync(System.String,System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Amorce du déploiement : crée le tout premier compte, uniquement si la
+            table est vide. À appeler par l'écran de premier lancement du poste.
+            </summary>
+        </member>
+        <member name="T:Framework.Data.UnitOfWork">
+            <summary>
+            Unit of Work générique : un contexte privé créé par la fabrique, des dépôts
+            à la demande, une frontière d'écriture unique (SaveChanges ou transaction).
+            Réservé Transient dans la DI : jamais deux écrans ne partagent le même contexte.
+            </summary>
+        </member>
+    </members>
+</doc>

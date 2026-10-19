@@ -1,0 +1,75 @@
+<Window x:Class="Framework.WPF.Views.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Connexion"
+        Width="420" Height="560"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        FontFamily="{DynamicResource Font.App}"
+        Background="{DynamicResource Brush.Window}">
+
+    <Grid VerticalAlignment="Center" Margin="32,0">
+        <Border Background="{DynamicResource Brush.Surface}"
+                BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
+                CornerRadius="10" Padding="24">
+
+            <StackPanel>
+
+                <Border Background="{DynamicResource Brush.Accente}" CornerRadius="8"
+                        Width="40" Height="40" HorizontalAlignment="Left">
+                    <TextBlock Text="&#xE763;" FontFamily="Segoe MDL2 Assets"
+                               Foreground="{DynamicResource Brush.TexteSurAccente}"
+                               FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+
+                <TextBlock Text="{Binding ModePremierCompte, Converter={StaticResource LibelleModeConnexion}}"
+                           FontSize="18" FontWeight="SemiBold" Margin="0,14,0,2"
+                           Foreground="{DynamicResource Brush.Text}" />
+
+                <TextBlock Text="Framework Desktop — socle de démarrage générique."
+                           FontSize="12" Margin="0,0,0,18"
+                           Foreground="{DynamicResource Brush.TextSecondaire}" />
+
+                <TextBlock Text="Identifiant" FontSize="12" Margin="0,0,0,4"
+                           Foreground="{DynamicResource Brush.TextSecondaire}" />
+                <TextBox Style="{StaticResource ChampTexte}"
+                         Text="{Binding Identifiant, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Text="Nom complet" FontSize="12" Margin="0,12,0,4"
+                           Foreground="{DynamicResource Brush.TextSecondaire}"
+                           Visibility="{Binding ModePremierCompte, Converter={StaticResource BooleenVersVisibilite}}" />
+                <TextBox Style="{StaticResource ChampTexte}"
+                         Text="{Binding NomComplet, UpdateSourceTrigger=PropertyChanged}"
+                         Visibility="{Binding ModePremierCompte, Converter={StaticResource BooleenVersVisibilite}}" />
+
+                <TextBlock Text="Mot de passe" FontSize="12" Margin="0,12,0,4"
+                           Foreground="{DynamicResource Brush.TextSecondaire}" />
+                <PasswordBox x:Name="ZoneMotDePasse"
+                             Background="{DynamicResource Brush.Surface}"
+                             Foreground="{DynamicResource Brush.Text}"
+                             BorderBrush="{DynamicResource Brush.Border}"
+                             BorderThickness="1" Padding="8,6" FontSize="13" />
+
+                <TextBlock Text="Confirmation du mot de passe" FontSize="12" Margin="0,12,0,4"
+                           Foreground="{DynamicResource Brush.TextSecondaire}"
+                           Visibility="{Binding ModePremierCompte, Converter={StaticResource BooleenVersVisibilite}}" />
+                <PasswordBox x:Name="ZoneConfirmation"
+                             Background="{DynamicResource Brush.Surface}"
+                             Foreground="{DynamicResource Brush.Text}"
+                             BorderBrush="{DynamicResource Brush.Border}"
+                             BorderThickness="1" Padding="8,6" FontSize="13"
+                             Visibility="{Binding ModePremierCompte, Converter={StaticResource BooleenVersVisibilite}}" />
+
+                <TextBlock Text="{Binding MessageErreur}"
+                           Foreground="{DynamicResource Brush.Danger}"
+                           FontSize="12" TextWrapping="Wrap" Margin="0,12,0,0"
+                           Visibility="{Binding MessageErreur, Converter={StaticResource TexteVersVisibilite}}" />
+
+                <Button Content="Se connecter" Command="{Binding SeConnecterCommand}"
+                        Style="{StaticResource BoutonPrimaire}"
+                        Margin="0,18,0,0" IsDefault="True"
+                        IsEnabled="{Binding EstOccupe, Converter={StaticResource InverseBooleen}}" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

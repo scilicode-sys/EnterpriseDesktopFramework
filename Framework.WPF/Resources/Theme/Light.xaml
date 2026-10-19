@@ -1,0 +1,29 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- PALETTE CLAIRE. Toute consommation se fait en DynamicResource :
+         le ThemeService remplace ce dictionnaire à chaud, sans redessin des fenêtres. -->
+
+    <Color x:Key="Color.Window">#FFF4F6F8</Color>
+    <SolidColorBrush x:Key="Brush.Window" Color="{StaticResource Color.Window}" />
+
+    <SolidColorBrush x:Key="Brush.Surface" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="Brush.Sidebar" Color="#FFE9EDF2" />
+    <SolidColorBrush x:Key="Brush.Border" Color="#FFD8DEE6" />
+
+    <SolidColorBrush x:Key="Brush.Text" Color="#FF1C2430" />
+    <SolidColorBrush x:Key="Brush.TextSecondaire" Color="#FF5B6775" />
+
+    <SolidColorBrush x:Key="Brush.Accente" Color="#FF0E9384" />
+    <SolidColorBrush x:Key="Brush.TexteSurAccente" Color="#FFFFFFFF" />
+
+    <SolidColorBrush x:Key="Brush.NavSurvol" Color="#FFE3E8EF" />
+    <SolidColorBrush x:Key="Brush.NavSelection" Color="#FFCFE9E5" />
+
+    <SolidColorBrush x:Key="Brush.Succes" Color="#FF2EAD6B" />
+    <SolidColorBrush x:Key="Brush.Alerte" Color="#FFE8A33D" />
+    <SolidColorBrush x:Key="Brush.Danger" Color="#FFD64545" />
+
+    <FontFamily x:Key="Font.App">Segoe UI</FontFamily>
+
+</ResourceDictionary>
