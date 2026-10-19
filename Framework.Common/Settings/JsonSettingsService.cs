@@ -69,8 +69,10 @@ public sealed class JsonSettingsService : ISettingsService
             value = element.Deserialize<T>(LectureOptions);
             return value is not null;
         }
-        catch (JsonException)
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException)
         {
+            // Type enregistré incompatible avec le type demandé : la clé est
+            // traitée comme absente, le défaut de l'appelant reprend la main.
             return false;
         }
     }

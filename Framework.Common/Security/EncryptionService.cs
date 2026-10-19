@@ -148,7 +148,9 @@ public sealed class EncryptionService
         var tag = new byte[TagSize];
         var chiffe = new byte[longueur];
 
-        aes.Encrypt(aad, nonce, clair.AsSpan(0, longueur), chiffe, tag);
+        // Attention à l'ordre positionnel de l'overload .NET 8 :
+        // Encrypt(nonce, plaintext, ciphertext, tag, aad).
+        aes.Encrypt(nonce, clair.AsSpan(0, longueur), chiffe, tag, aad);
 
         sortie.Write(BitConverter.GetBytes(longueur + TagSize));
         sortie.Write(chiffe);
@@ -161,7 +163,8 @@ public sealed class EncryptionService
         var clair = new byte[tailleBloc - TagSize];
         var tag = bloc.AsSpan(tailleBloc - TagSize, TagSize).ToArray();
 
-        aes.Decrypt(aad, nonce, bloc.AsSpan(0, tailleBloc - TagSize), tag, clair);
+        // Decrypt(nonce, ciphertext, tag, plaintext, aad) — même ordre positionnel.
+        aes.Decrypt(nonce, bloc.AsSpan(0, tailleBloc - TagSize), tag, clair, aad);
         sortie.Write(clair);
     }
 
