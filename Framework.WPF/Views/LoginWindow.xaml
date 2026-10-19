@@ -69,6 +69,11 @@
                         Style="{StaticResource BoutonPrimaire}"
                         Margin="0,18,0,0" IsDefault="True"
                         IsEnabled="{Binding EstOccupe, Converter={StaticResource InverseBooleen}}" />
+
+                <Button Content="Configuration réseau de ce poste"
+                        Style="{StaticResource BoutonDiscret}"
+                        Margin="0,10,0,0"
+                        Click="ConfigurationReseau_Click" />
             </StackPanel>
         </Border>
     </Grid>

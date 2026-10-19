@@ -5,9 +5,11 @@ using Framework.Common.Extensions;
 using Framework.Common.Telemetry;
 using Framework.Common.Update;
 using Framework.Core.Navigation;
+using Framework.Core.Settings;
 using Framework.Core.Sync;
 using Framework.Core.Theming;
 using Framework.Data.Extensions;
+using Framework.Data.Postgres;
 using Framework.WPF.Messages;
 using Framework.WPF.Services;
 using Framework.WPF.ViewModels;
@@ -28,6 +30,9 @@ public partial class App : Application
 {
     /// <summary>Nom de l'installation : dossier %LocalAppData%/%AppData% du produit.</summary>
     public const string NomApplication = "FrameworkDemo";
+
+    /// <summary>Clé HMAC de la démo — remplacer par la clé propre au produit dérivé.</summary>
+    public const string CleLicenceDemo = "framework-demo-cle-hmac";
 
     private IHost? _hote;
     private ISyncNotificationService? _sync;
@@ -51,7 +56,9 @@ public partial class App : Application
                     retainedFileCountLimit: 15))
             .ConfigureServices(services =>
             {
-                services.AddFrameworkCommon(NomApplication);
+                // La clé de licence de démonstration n'a aucune valeur commerciale :
+                // un produit dérivé passe SA clé (celle dont l'éditeur tient le secret).
+                services.AddFrameworkCommon(NomApplication, CleLicenceDemo);
                 services.AddFrameworkData();
 
                 services.AddSingleton<NavigationService>();
@@ -63,15 +70,24 @@ public partial class App : Application
                 services.AddTransient<LoginViewModel>();
                 services.AddTransient<DashboardViewModel>();
                 services.AddSingleton<ShellViewModel>();
+                services.AddTransient<ConnectionConfigViewModel>();
 
                 services.AddTransient<LoginWindow>();
                 services.AddTransient<MainWindow>();
+                services.AddTransient<ConnectionConfigWindow>();
             })
             .Build();
 
         await _hote.StartAsync();
 
         _hote.Services.GetRequiredService<IThemeService>().ApplySavedSettings();
+
+        // Premier lancement du poste : aucun PostgreSQL réglé dans les settings →
+        // l'assistant réseau autonome ouvre le bal avant toute tentative de connexion.
+        if (!PostgresConfigure())
+        {
+            OuvrirConfigurationReseau();
+        }
 
         _sync = _hote.Services.GetRequiredService<ISyncNotificationService>();
         _sync.EntityChanged += (_, notification) =>
@@ -85,6 +101,24 @@ public partial class App : Application
     public void OuvrirConnexion()
     {
         BasculerVers(_hote!.Services.GetRequiredService<LoginWindow>());
+    }
+
+    /// <summary>Assistant réseau autonome : test, création de base et enregistrement des réglages.</summary>
+    public void OuvrirConfigurationReseau()
+    {
+        var fenetre = _hote!.Services.GetRequiredService<ConnectionConfigWindow>();
+        fenetre.Owner = _fenetreCourante;
+        fenetre.ShowDialog();
+    }
+
+    private bool PostgresConfigure()
+    {
+        var reglages = _hote!.Services.GetRequiredService<ISettingsService>()
+            .Get(PostgresConnectionResolver.SettingsKey, new PostgresConnectionSettings());
+
+        return !string.IsNullOrWhiteSpace(reglages.Host)
+            && !string.IsNullOrWhiteSpace(reglages.Database)
+            && !string.IsNullOrWhiteSpace(reglages.Username);
     }
 
     /// <summary>Shell principal, appelé par la fenêtre de connexion après un succès.</summary>

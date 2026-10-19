@@ -20,23 +20,44 @@ public class PostgresConnectionResolver
     public static readonly string ClientSyncId =
         $"framework-{Environment.MachineName}-{Environment.ProcessId}";
 
-    private readonly PostgresConnectionSettings _settings;
+    private readonly ISettingsService _settingsService;
+    private readonly ILogger<PostgresConnectionResolver> _logger;
 
-    public string ConnectionString { get; }
+    private PostgresConnectionSettings _settings = new();
 
-    public string Host { get; }
+    public string ConnectionString { get; private set; } = string.Empty;
 
-    public int Port { get; }
+    public string Host { get; private set; } = string.Empty;
 
-    public string Database { get; }
+    public int Port { get; private set; } = 5432;
 
-    public string Username { get; }
+    public string Database { get; private set; } = string.Empty;
 
-    public string Password { get; }
+    public string Username { get; private set; } = string.Empty;
+
+    public string Password { get; private set; } = string.Empty;
 
     public PostgresConnectionResolver(ISettingsService settingsService, ILogger<PostgresConnectionResolver> logger)
     {
-        var settings = settingsService.Get(SettingsKey, new PostgresConnectionSettings());
+        _settingsService = settingsService;
+        _logger = logger;
+        Charger();
+    }
+
+    /// <summary>
+    /// Relit les réglages réseau : à appeler après un enregistrement depuis
+    /// l'assistant. Les contextes EF créés ensuite (fabrique) et les
+    /// reconnexions de l'écouteur prennent la nouvelle chaîne sans redémarrer.
+    /// </summary>
+    public void Actualiser()
+    {
+        Charger();
+        _logger.LogInformation("Resolver de connexion ressourcé : {Host}:{Port}/{Database}.", Host, Port, Database);
+    }
+
+    private void Charger()
+    {
+        var settings = _settingsService.Get(SettingsKey, new PostgresConnectionSettings());
 
         _settings = settings;
         Host = settings.Host;
@@ -85,6 +106,11 @@ public class PostgresConnectionResolver
 
             return Resultat(PgConnectionStatus.Ok);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // L'appelant a rompu : la cancellation se propage, elle n'est pas un diagnostic.
+            throw;
+        }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
             logger?.LogWarning("Timeout ({Ms}ms) lors de la connexion PostgreSQL", timeoutMs);
@@ -127,4 +153,91 @@ public class PostgresConnectionResolver
 
         return builder.ConnectionString;
     }
+
+    /// <summary>
+    /// À partir des réglages courants, se connecte à la base de maintenance
+    /// « postgres » et crée la base du produit si elle manque. L'assistant
+    /// réseau du premier lancement s'en sert ; le framework ne fait JAMAIS
+    /// d'EnsureCreated — les tables restent l'affaire des migrations EF.
+    /// Ne lève jamais : le résultat porte le statut et le message.
+    /// </summary>
+    public static async Task<PgConnectionResult> GarantirBaseAsync(
+        PostgresConnectionSettings settings,
+        int timeoutMs = 15000,
+        CancellationToken cancellationToken = default,
+        ILogger? logger = null)
+    {
+        PgConnectionResult Resultat(PgConnectionStatus status, string? detail = null) => new()
+        {
+            Status = status,
+            DetailTechnique = detail,
+            Host = settings.Host,
+            Port = settings.Port,
+            Database = settings.Database,
+        };
+
+        if (!EstNomDeBaseValide(settings.Database))
+        {
+            return Resultat(PgConnectionStatus.ErreurInconnue,
+                $"Nom de base non accepté : « {settings.Database} » (lettres, chiffres, tiret bas ou tiret seulement).");
+        }
+
+        var maintenance = new PostgresConnectionSettings
+        {
+            Host = settings.Host,
+            Port = settings.Port,
+            Database = "postgres",
+            Username = settings.Username,
+            Password = settings.Password,
+            SslRequired = settings.SslRequired,
+        };
+
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(timeoutMs);
+
+        try
+        {
+            await using var connection = new NpgsqlConnection(BuildConnectionString(maintenance));
+            await connection.OpenAsync(timeoutCts.Token);
+
+            await using (var verifier = connection.CreateCommand())
+            {
+                verifier.CommandText = "SELECT 1 FROM pg_database WHERE datname = @nom;";
+                verifier.Parameters.AddWithValue("nom", settings.Database);
+                var existe = await verifier.ExecuteScalarAsync(timeoutCts.Token) is not null;
+
+                if (existe)
+                {
+                    return Resultat(PgConnectionStatus.Ok);
+                }
+            }
+
+            // CREATE DATABASE n'accepte aucun paramètre : le nom est validé
+            // par whitelist puis passé entre guillemets échappés.
+            await using var creer = connection.CreateCommand();
+            creer.CommandText = $"CREATE DATABASE \"{settings.Database.Replace("\"", "\"\"")}\";";
+            await creer.ExecuteNonQueryAsync(timeoutCts.Token);
+
+            logger?.LogInformation("Base « {Database} » créée sur {Host}:{Port}.", settings.Database, settings.Host, settings.Port);
+            return Resultat(PgConnectionStatus.Ok);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            logger?.LogWarning("Timeout ({Ms}ms) lors de la création de la base", timeoutMs);
+            return Resultat(PgConnectionStatus.ServeurInjoignable, $"Timeout après {timeoutMs}ms");
+        }
+        catch (Exception ex)
+        {
+            logger?.LogWarning(ex, "Création de la base « {Database} » impossible", settings.Database);
+            return Resultat(PgConnectionStatus.ErreurInconnue, ex.Message);
+        }
+    }
+
+    internal static bool EstNomDeBaseValide(string? nom)
+        => !string.IsNullOrEmpty(nom)
+        && System.Text.RegularExpressions.Regex.IsMatch(nom, @"^[a-zA-Z_][a-zA-Z0-9_\-]{0,62}$");
 }

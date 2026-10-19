@@ -26,4 +26,15 @@ public partial class LoginWindow : Window
 
         _connexion.ConnexionReussie += (sender, e) => ((App)Application.Current).OuvrirShell();
     }
+
+    private async void ConfigurationReseau_Click(object sender, RoutedEventArgs e)
+    {
+        // L'assistant est modal et autonome : le poste peut être reconfiguré
+        // sans redémarrer, y compris depuis un échec de connexion.
+        ((App)Application.Current).OuvrirConfigurationReseau();
+
+        // Si le serveur est désormais joignable, l'écran reprend ses droits
+        // (mode connexion ou amorce du premier compte) sans redémarrage.
+        await _connexion.PreparerAsync();
+    }
 }
