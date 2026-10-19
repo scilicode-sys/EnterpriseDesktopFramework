@@ -1,0 +1,16 @@
+# Sorties de build et artefacts d'outillage — ne se committent jamais.
+bin/
+obj/
+.vs/
+*.user
+*.suo
+publish/
+
+# Réglages locaux d'un poste (contiennent host, base, utilisateur…).
+settings.json
+licence.json
+licence.dat
+
+# Caches d'analyse et de test
+TestResults/
+*.binlog
