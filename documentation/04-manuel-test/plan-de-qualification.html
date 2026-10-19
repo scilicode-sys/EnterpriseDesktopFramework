@@ -91,6 +91,11 @@
       <table>
         <thead><tr><th style="width:14%">Qui</th><th style="width:43%">Étape</th><th>Attendu</th></tr></thead>
         <tbody>
+          <tr><td><span class="qui qui-poste">Poste</span></td>
+            <td><b>Avant toute migration</b>&nbsp;: base créée par l'assistant, donc sans tables</td>
+            <td>La ligne rouge dit «&nbsp;<b>la base est joignable mais ses tables sont absentes</b>&nbsp;» et
+              cite le nom de base. Le message «&nbsp;vérifiez la configuration réseau&nbsp;» sur ce cas est un
+              défaut (corrigé en <code>d65851a</code>) — il fait reconfigurer un poste câblé.</td></tr>
           <tr><td><span class="qui qui-poste">Poste</span></td><td>Base vide → écran de connexion</td>
             <td>Le titre bascule en <b>création du premier compte</b> et demande nom complet + mot de passe.</td></tr>
           <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Créer le compte, se connecter</td>

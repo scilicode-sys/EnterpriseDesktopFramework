@@ -15,7 +15,7 @@
     <p class="lede">Cinq projets, un sens de dépendance unique, aucune règle métier dans
       le socle. Cette page décrit ce qui existe — pas ce que votre produit va en faire.</p>
     <div class="meta">
-      <span>État du socle&nbsp;: <b>commit fefb865</b> — 19/10/2026</span>
+      <span>État du socle&nbsp;: <b>commit d65851a</b> — 19/10/2026</span>
       <span>Solution&nbsp;: <code>Framework.sln</code></span>
       <span>Exécutable produit&nbsp;: <code>FrameworkDemo.exe</code></span>
     </div>
@@ -40,7 +40,7 @@
         <td>Composition root et écrans&nbsp;: hôte DI, shell, navigation par ViewModel,
           thème à chaud, assistant réseau, écran CRUD de référence, écran des droits.</td></tr>
       <tr><td><code>Framework.Tests</code></td><td>net8.0-windows</td><td>les quatre</td>
-        <td>162 tests xUnit, sans base de données réelle (EF InMemory + horloge pilotée).</td></tr>
+        <td>168 tests xUnit, sans base de données réelle (EF InMemory + horloge pilotée).</td></tr>
     </tbody>
   </table>
 
@@ -76,6 +76,9 @@
           audit écrit au <code>SaveChanges</code>, DELETE converti en <code>IsDeleted</code>.</td></tr>
       <tr><td>Core</td><td><code>IGenericRepository&lt;T&gt;</code>, <code>IUnitOfWork</code></td>
         <td>Frontière d'écriture unique&nbsp;; aucun écran ne parle directement au <code>DbContext</code>.</td></tr>
+      <tr><td>Core</td><td><code>SchemaNonInstalleException</code></td>
+        <td>«&nbsp;base joignable, tables absentes&nbsp;» n'est pas une panne réseau. Le porteur du
+          diagnostic est le nom de base seul — jamais la chaîne de connexion.</td></tr>
       <tr><td>Core</td><td><code>ISyncNotificationService</code>, <code>SyncNotificationDto</code></td>
         <td>Contrat temps réel inter-postes, indépendant de PostgreSQL.</td></tr>
       <tr><td>Core</td><td><code>Droits</code>, <code>RoleDefini</code>, <code>MatriceRoles</code>, <code>MatriceParDefaut</code>, <code>AutorisationService</code></td>
@@ -124,13 +127,19 @@
       <tr><td>WPF</td><td><code>NavigationService</code></td>
         <td>La pile garde des <b>types</b>&nbsp;; l'instance est résolue en DI à chaque visite — pas de ViewModel caché en singleton.</td></tr>
       <tr><td>WPF</td><td><code>ConnectionConfigWindow</code></td>
-        <td>Assistant réseau autonome&nbsp;: test, création de base, enregistrement.</td></tr>
+        <td>Assistant réseau autonome&nbsp;: test, création de base, enregistrement. Il se ferme
+          sur la notification de <code>EstConfigure</code> et rappelle qu'une base neuve est vide
+          de tables avant d'écrire «&nbsp;ce poste est prêt&nbsp;».</td></tr>
+      <tr><td>WPF</td><td><code>LoginViewModel</code> + <code>LoginWindow</code></td>
+        <td>Un seul écran pour deux états&nbsp;: <b>Créer le premier compte</b> quand la table
+          <code>Comptes</code> est vide (rôle <code>Administrateur</code> imposé), <b>Connexion</b>
+          sinon. Schéma absent et panne réseau y sont deux messages distincts.</td></tr>
       <tr><td>WPF</td><td><code>ExempleViewModel</code> + <code>ExempleView</code> + <code>ExempleEntity</code></td>
         <td>Écran CRUD <b>de référence</b>, à copier puis à supprimer avec la table <code>Exemples</code>.</td></tr>
       <tr><td>WPF</td><td><code>DroitsViewModel</code> + <code>DroitsView</code></td>
         <td>La matrice déroulée, la session marquée, les rôles sans issue signalés.</td></tr>
       <tr><td>CI</td><td><code>.github/workflows/framework-ci.yml</code></td>
-        <td>windows-latest&nbsp;: Release build + 162 tests sur tout push touchant le framework.</td></tr>
+        <td>windows-latest&nbsp;: Release build + 168 tests sur tout push touchant le framework.</td></tr>
     </tbody>
   </table>
 

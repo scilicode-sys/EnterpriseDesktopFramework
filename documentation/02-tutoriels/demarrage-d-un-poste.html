@@ -47,10 +47,18 @@
 
   <div class="pas"><div class="n">4</div><div class="c">
     <span class="qui qui-vous">Exploitant</span> Bouton <b>Enregistrer et fermer</b>. Le poste reteste, et si la base
-    est absente il la <b>crée</b> («&nbsp;La base a été créée sur le serveur.&nbsp;») — le nom de base est validé par
+    est absente il la <b>crée</b>, puis affiche&nbsp;: «&nbsp;La base a été créée sur le serveur. Elle est vide
+    de tables&nbsp;: installez le schéma avec la migration EF…&nbsp;» — le nom de base est validé par
     whitelist avant tout appel, et un compte sans droit de création rend la main avec une phrase explicite.
     Les réglages partent ensuite dans <code>%LocalAppData%\{NomApplication}\settings.json</code> et le resolver de
     connexion se reactualise <b>à chaud</b>&nbsp;: pas besoin de redémarrer le poste.
+    <div class="encadre attendu"><span class="t">Attendu</span> Sur «&nbsp;Réglages enregistrés&nbsp;: ce poste est
+    prêt.&nbsp;», <b>la fenêtre se ferme seule</b> après un instant. Si elle reste ouverte, l'enregistrement est
+    bien passé quand même — le défaut était présent jusqu'à <code>d65851a</code>.</div>
+    <div class="encadre danger"><span class="t">Ne pas sauter cette étape</span> Une base que l'assistant vient
+    de créer ne contient <b>aucune table</b>. Sans l'étape 5, l'écran de connexion affiche «&nbsp;la base est
+    joignable mais ses tables sont absentes&nbsp;», et le temps réel est mort&nbsp;: le trigger de synchro
+    fait partie de la migration, pas de la base.</div>
   </div></div>
 
   <div class="pas"><div class="n">5</div><div class="c">
@@ -64,15 +72,27 @@ dotnet ef database update --project Framework.Data      # applique Initial + tri
   </div></div>
 
   <div class="pas"><div class="n">6</div><div class="c">
-    <span class="qui qui-outil">Outil</span> <code>psql</code> — vous vérifiez que la synchro est bien vivante&nbsp;:
-    <pre><code>SELECT tgname FROM pg_trigger WHERE tgname LIKE 'TX_sync%';
+    <span class="qui qui-outil">Outil</span> <code>psql</code> — ou pgAdmin si <code>psql</code> n'est pas dans le
+    <code>PATH</code> (c'est le cas d'une installation PostgreSQL standard sous Windows&nbsp;: l'exécutable est
+    dans <code>C:\Program Files\PostgreSQL\&lt;version&gt;\bin</code>)&nbsp;:
+    <pre><code>SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename;
+-- attendu : Comptes  Exemples  __EFMigrationsHistory
+
+SELECT tgname FROM pg_trigger WHERE tgname LIKE 'TX_sync%';
 -- attendu : TX_sync_Comptes  TX_sync_Exemples</code></pre>
-    Deux lignes, ou le temps réel ne marchera jamais et <b>rien ne le dira à l'écran</b>.
+    Deux triggers, ou le temps réel ne marchera jamais et <b>rien ne le dira à l'écran</b>.
   </div></div>
 
   <div class="pas"><div class="n">7</div><div class="c">
-    <span class="qui qui-vous">Exploitant</span> Relancer le poste, puis écran de connexion. Sur une base vide,
-    il se transforme en <b>création du premier compte</b>&nbsp;: identifiant, nom complet, mot de passe.
+    <span class="qui qui-vous">Exploitant</span> Écran de connexion. Refermer l'assistant (croix) ou relancer le
+    poste suffit&nbsp;: la fermeture relance le diagnostic de la table des comptes.
+    <b>Aucun login n'existe à ce stade</b> — le socle ne semence personne. Deux états, lus dans le titre&nbsp;:
+    <ul>
+      <li><b>«&nbsp;Créer le premier compte&nbsp;»</b> (table vide)&nbsp;: deux champs de plus, <i>Nom complet</i>
+        et <i>Confirmation</i>. Vous inventez identifiant et mot de passe.</li>
+      <li><b>«&nbsp;Connexion&nbsp;»</b> (table déjà peuplée)&nbsp;: les comptes existent déjà, par exemple
+        parce que la base pointée n'est pas vierge.</li>
+    </ul>
     <div class="encadre attendu"><span class="t">Attendu</span> Le rôle de ce premier compte est
     <b>Administrateur, forcé</b> dans le code — aucun choix n'est proposé, volontairement.
     À la connexion&nbsp;: votre nom et « Administrateur » dans la barre latérale, et les
@@ -86,6 +106,18 @@ dotnet ef database update --project Framework.Data      # applique Initial + tri
       <tr><td>L'assistant se rouvre à chaque lancement</td>
         <td>Réglages non écrits, ou fichier cabossé (le socle repart alors à vide, sans [ERR])</td>
         <td><span class="qui qui-vous">Exploitant</span> ouvrir <code>%LocalAppData%\{NomApplication}\settings.json</code></td></tr>
+      <tr><td>«&nbsp;la base est joignable mais ses tables sont absentes&nbsp;»</td>
+        <td>Migration EF jamais appliquée sur cette base (<code>42P01</code>) — <b>pas</b> un problème réseau</td>
+        <td><span class="qui qui-vous">Exploitant</span> étape 5&nbsp;: <code>dotnet ef database update --project Framework.Data</code>,
+          puis refermer l'assistant pour relancer le diagnostic</td></tr>
+      <tr><td>L'assistant reste ouvert après «&nbsp;Réglages enregistrés&nbsp;»</td>
+        <td>Défaut corrigé en <code>d65851a</code>&nbsp;: <code>EstConfigure</code> ne levait pas
+          <code>PropertyChanged</code>, la fermeture automatique était inatteignable</td>
+        <td>Vérifier la version du poste&nbsp;; en attendant, la croix (X) suffit — les réglages sont écrits</td></tr>
+      <tr><td>«&nbsp;No password has been provided but the backend requires one&nbsp;»</td>
+        <td>Le champ mot de passe est <b>vide</b>&nbsp;: une <code>PasswordBox</code> ne se pré-remplit jamais,
+          donc chaque réouverture de l'assistant part à vide</td>
+        <td>Retaper le mot de passe avant de tester&nbsp;; l'erreur blâme le serveur, ce n'en est pas une</td></tr>
       <tr><td>« Server does not exist / connection refused »</td>
         <td>Hôte ou port erroné, service PostgreSQL arrêté, pare-feu</td>
         <td>Bouton Tester de l'assistant&nbsp;; le message cite le SQLSTATE traduit</td></tr>

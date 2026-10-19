@@ -17,7 +17,7 @@
       chaque tour de chantier.</p>
     <div class="meta">
       <span>Version&nbsp;: <b>1.0</b></span>
-      <span>Aligné sur&nbsp;: <b>commit fefb865</b> (19/10/2026)</span>
+      <span>Aligné sur&nbsp;: <b>commit d65851a</b> (19/10/2026)</span>
       <span>Statut&nbsp;: <span class="statut en-cours">vivant</span></span>
     </div>
   </header>
@@ -104,8 +104,9 @@
         <td>Le poste émetteur ne recharge pas&nbsp;; les autres si. Deux instances sur la même
           machine suffisent à le prouver.</td></tr>
       <tr><td>EF-07</td><td>Assistant réseau autonome et reconfiguration à chaud</td><td><span class="statut livre">livré</span></td>
-        <td>Poste non configuré → assistant ouvert d'office&nbsp;; après enregistrement,
-          aucun redémarrage.</td></tr>
+        <td>Poste non configuré → assistant ouvert d'office&nbsp;; après enregistrement, il se ferme
+          de lui-même, le resolver est ressourcé et aucun redémarrage n'est nécessaire. Une base
+          neuve annonce qu'elle est vide de tables.</td></tr>
       <tr><td>EF-08</td><td>Écran de lecture de la matrice</td><td><span class="statut livre">livré</span></td>
         <td>Rôles, descriptions, héritage, permissions aplatis, session courante marquée,
           rôles sans issue signalés.</td></tr>
@@ -132,7 +133,7 @@
       <tr><td>EN-01</td><td>Build Release à 0 erreur <b>et</b> 0 avertissement</td>
         <td><span class="qui qui-agent">Agent</span> <code>dotnet build Framework.sln -c Release</code> avant chaque commit.</td></tr>
       <tr><td>EN-02</td><td>Suite automatique 100&nbsp;% verte, sans base réelle</td>
-        <td><span class="qui qui-agent">Agent</span> <code>dotnet test</code>&nbsp;; 162 tests à ce jour, EF InMemory
+        <td><span class="qui qui-agent">Agent</span> <code>dotnet test</code>&nbsp;; 168 tests à ce jour, EF InMemory
           et horloge pilotée uniquement.</td></tr>
       <tr><td>EN-03</td><td>Aucun secret en dur, aucun réglage local committé</td>
         <td><code>.gitignore</code> exclut <code>settings.json</code>, <code>licence.*</code>, <code>bin/</code>,
@@ -154,6 +155,11 @@
       <tr><td>EN-10</td><td>Isolation stricte du périmètre de travail</td>
         <td>Tout se passe dans <code>Framework.*</code> et <code>Framework.sln</code>&nbsp;: <b>aucun fichier
           d'un produit voisin n'est touché</b>, jamais.</td></tr>
+      <tr><td>EN-11</td><td>Diagnostic juste avant diagnostic aimable</td>
+        <td>Un message qui accuse le réseau alors que la base est joignable est un <b>défaut</b>, pas
+          un détail de formulation&nbsp;: chaque échec visible porte la cause vraie (schéma absent,
+          authentification, serveur injoignable) et la commande qui débloque. Aucun élément de
+          connexion dans un message destiné à l'écran.</td></tr>
     </tbody>
   </table>
 

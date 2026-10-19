@@ -17,7 +17,7 @@
       exact, et la correction tenue.</p>
     <div class="meta">
       <span>Source&nbsp;: <code>Framework_Blueprint.md</code> § 2 et § 3</span>
-      <span>Aligné sur&nbsp;: <b>commit fefb865</b></span>
+      <span>Aligné sur&nbsp;: <b>commit d65851a</b></span>
       <span>Règle&nbsp;: une page HTML qui diverge du blueprint = blueprint régénéré</span>
     </div>
   </header>
@@ -125,6 +125,24 @@
         <td>Elle ne passe plus sur la machine d'à côté, ni en CI</td>
         <td>EF InMemory + horloge pilotée suffisent pour les décisions&nbsp;; le SQL réel reste l'affaire
           des postes (et du parcours T3).</td></tr>
+      <tr><td>Exposer un booléen d'état en auto-property et surveiller <code>PropertyChanged</code> dessus</td>
+        <td>L'assistant réseau écrivait bien ses réglages mais <b>ne se fermait jamais</b>&nbsp;: le code de
+          fermeture automatique du code-behind ne voyait jamais l'événement. Invisible en tests, car le
+          chemin heureux exigeait un serveur joignable</td>
+        <td>Soit <code>[ObservableProperty]</code>, soit <code>OnPropertyChanged(nameof(X))</code> assumé.
+          Et isoler la partie finalisable du test réseau&nbsp;: <code>Finaliser(prelude)</code> se teste
+          sans serveur.</td></tr>
+      <tr><td>Traduire tout <code>catch (Exception)</code> par «&nbsp;vérifiez la configuration réseau&nbsp;»</td>
+        <td>Une base joignable et non migrée (<code>42P01</code>) envoyait l'exploitant reconfigurer un poste
+          parfaitement câblé — et le vrai motif ne sortait que dans la notification empilée</td>
+        <td>Le statut PostgreSQL est interprété là où il est levé&nbsp;: <code>AuthService</code> traduit
+          <code>42P01</code> en <code>SchemaNonInstalleException</code>, l'écran tient deux messages distincts.</td></tr>
+      <tr><td>Supposer qu'une base créée par l'assistant est prête à l'emploi</td>
+        <td>Elle est <b>vide</b>&nbsp;: ni <code>Comptes</code>, ni trigger de synchro. Le poste «&nbsp;se
+          connecte&nbsp;» et ne peut rien faire</td>
+        <td>Le cadre ne fait jamais <code>EnsureCreated</code>. L'assistant le dit à l'enregistrement, et
+          l'étape 5 du <a href="../02-tutoriels/demarrage-d-un-poste.html">démarrage d'un poste</a> reste la
+          seule source des tables.</td></tr>
     </tbody>
   </table>
 

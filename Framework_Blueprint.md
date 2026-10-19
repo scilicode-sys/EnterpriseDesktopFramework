@@ -86,7 +86,7 @@ Framework.sln
 ├── Framework.Data      net8.0          EF Core 9 + Npgsql — sans UI
 ├── Framework.Common    net8.0-windows  réglages, chiffrement, licence, Velopack, Sentry, PDF/CSV
 ├── Framework.WPF       net8.0-windows  shell : hôte DI, navigation, thème, écrans
-└── Framework.Tests     net8.0-windows  162 tests xUnit — sans base de données réelle
+└── Framework.Tests     net8.0-windows  168 tests xUnit — sans base de données réelle
 ```
 
 Dépendances toujours dans ce sens : `WPF → Common → Core` et `WPF → Data → Core`.
@@ -96,6 +96,7 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
 |---|---|---|
 | Core | `IEntity`, `IAuditableEntity`, `ISoftDeletableEntity` | conventions de domaine reconnues par le contexte |
 | Core | `IGenericRepository<T>`, `IUnitOfWork` | dépôts génériques + frontière d'écriture unique |
+| Core | `SchemaNonInstalleException` | « base joignable, tables absentes » n'est **pas** une panne réseau : diagnostic distinct, message porteur, sans aucun élément de connexion |
 | Core | `ISyncNotificationService`, `SyncNotificationDto` | contrat temps réel inter-postes |
 | Core | `INavigationService`, `IThemeService`, `IAuthService`, `IHorloge`, `ISettingsService`, `IAlertService`, `ILicenseService` | transverses sans référence UI/DB |
 | Core | `Droits`, `RoleDefini`, `IMatriceRoles` / `MatriceRoles` | **RBAC générique** : permissions `module.verbe`, sauvageonne `*`, héritage aplati sans cycle, **rôle inconnu = zéro droit** |
@@ -127,7 +128,7 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
 | WPF | `DroitsViewModel` + `DroitsView` | écran « Rôles et permissions » : la matrice déroulée, la session courante marquée, les rôles déclarés qui ne mènent à aucun écran signalés |
 | WPF | `ExempleViewModel` + `ExempleView` | **écran CRUD de référence** : liste filtrable, formulaire, suppression logique, Unit of Work par opération, recharge sur notification d'un autre poste, **boutons grisés par le droit ET par l'état** |
 | Tests | `Framework.Tests` | hachage, chiffrement (fichier + DPAPI), licence/HWID complète, réglages, CSV/PDF, resolver + assistant, `AuthService` (gel inclus) sur EF InMemory, fabrique de conception (migrations), écran CRUD de référence, **matrice RBAC + `AutorisationService` + gates des écrans** |
-| CI | `.github/workflows/framework-ci.yml` | windows-latest : Release build + 162 tests sur tout push touchant le framework |
+| CI | `.github/workflows/framework-ci.yml` | windows-latest : Release build + 168 tests sur tout push touchant le framework |
 
 ## 2. Règles permanentes du framework
 
@@ -191,6 +192,22 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
   générer une migration sur une base inventée. `Framework.Data` ne peut pas
   référencer `Framework.Common` (cycle) — d'où son lecteur de réglages interne,
   en lecture seule.
+- **Une propriété d'état que le code-behind surveille doit lever
+  `PropertyChanged`.** `EstConfigure` était un simple auto-property : la
+  fermeture automatique de l'assistant réseau était du code mort, et le poste
+  restait bloqué sur la fenêtre *alors que* les réglages étaient écrits. Aucun
+  test ne le voyait, car le chemin heureux exige un serveur joignable. Depuis,
+  la finalisation est isolée dans `Finaliser(prelude)` et se teste sans réseau.
+- **Un `catch (Exception)` large transforme une base vide en panne réseau.**
+  `42P01: la relation « Comptes » n'existe pas` levait dans le bloc générique de
+  `PreparerAsync` : l'écran envoyait l'exploitant reconfigurer un poste
+  parfaitement câblé. Le statut PostgreSQL est donc traduit en
+  `SchemaNonInstalleException` côté `AuthService`, et l'écran de connexion tient
+  un message distinct. Ne jamais y faire transiter la chaîne de connexion.
+- **Une base créée par l'assistant est vide.** Le framework ne fait jamais
+  `EnsureCreated` : sans `dotnet ef database update --project Framework.Data`,
+  il n'y a ni `Comptes`, ni trigger de synchro — et donc aucun T3 possible.
+  L'assistant le dit maintenant à l'enregistrement.
 
 ## 4. Ce que le cadre laisse au produit
 
