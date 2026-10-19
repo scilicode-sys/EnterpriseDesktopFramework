@@ -1,9 +1,9 @@
 # Documentation du projet — mode d'emploi du dossier
 
-Ce dossier est la documentation **lisible** du socle. Elle est en HTML autonome
-une seule feuille de style partagée (`assets/doc.css`), pensée pour l'écran
-**et** pour l'impression : `Ctrl + P` → « Enregistrer au format PDF » donne un
-A4 propre, sans barre de navigation ni couleur perdue.
+Ce dossier est la documentation **lisible** du socle. Chaque page est un HTML
+autonome, avec une seule feuille de style partagée (`assets/doc.css`) en tout,
+pensée pour l'écran **et** pour l'impression : `Ctrl + P` → « Enregistrer au
+format PDF » donne un A4 propre, sans barre de navigation ni couleur perdue.
 
 Point d'entrée : [`index.html`](index.html).
 
@@ -71,5 +71,5 @@ page, jamais l'inverse.
 - Une page ne promet pas ce que le socle ne fait pas : les briques absentes
   (écran comptes, licence, exports branchés) sont listées comme **à faire** dans
   le CDC et la feuille de route, pas comme acquises.
-- Les régates de secrets restent valables ici : aucun mot de passe, aucune clé
+- La politique de secrets s'applique aussi ici : aucun mot de passe, aucune clé
   de licence, aucun contenu de `settings.json` dans une page.
