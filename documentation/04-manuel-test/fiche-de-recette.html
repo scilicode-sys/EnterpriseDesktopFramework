@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fiche de recette — Framework</title>
+<link rel="stylesheet" href="../assets/doc.css">
+<style>
+  /* Cases saisissables dans le navigateur&nbsp;; elles s'impriment telles quelles. */
+  td[contenteditable] { background: #fffdf5; min-width: 90px; }
+  td[contenteditable]:focus { outline: 2px solid var(--accent); background: #fff; }
+  .verdict { font-weight: 700; text-align: center; }
+  .ok { color: var(--succes); }
+  .ko { color: var(--danger); }
+  .nj { color: var(--texte-secondaire); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page-head">
+    <div class="rubrique">04 · Manuel de test</div>
+    <h1>Fiche de recette — jeu exploitant</h1>
+    <p class="lede">Preuve que le socle a été joué, pas seulement compilé. Les cases jaunes sont
+      saisissables dans le navigateur&nbsp;; la page s'imprime ou se conserve en PDF avec le
+      <b>Ctrl&nbsp;+&nbsp;P</b> de la fiche remplie.</p>
+    <div class="meta">
+      <span>Plan joué&nbsp;: <a href="plan-de-qualification.html">T0 → T6</a></span>
+      <span>Verdicts&nbsp;: <span class="ok">OK</span> / <span class="ko">KO</span> / <span class="nj">NJ</span> (non joué)</span>
+    </div>
+  </header>
+
+  <nav class="fils"><a href="../index.html">Accueil</a> › 04 · Manuel de test › <b>Fiche de recette</b></nav>
+
+  <h2>Identification de l'essai</h2>
+  <table>
+    <tbody>
+      <tr><th style="width:22%">Date du jeu</th><td contenteditable class="couleur-case">&nbsp;</td>
+          <th style="width:22%">Exécuté par</th><td contenteditable class="couleur-case">&nbsp;</td></tr>
+      <tr><th>Version testée</th><td contenteditable class="couleur-case">commit fefb865</td>
+          <th>Poste(s)</th><td contenteditable class="couleur-case">&nbsp;</td></tr>
+      <tr><th>Serveur de données</th><td contenteditable class="couleur-case">&nbsp;</td>
+          <th>Base</th><td contenteditable class="couleur-case">&nbsp;</td></tr>
+      <tr><th>Durée réelle</th><td contenteditable class="couleur-case">&nbsp;</td>
+          <th>Deuxième poste utilisé (T3)</th><td contenteditable class="couleur-case">oui / non</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Verdicts par parcours</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:7%">ID</th><th style="width:26%">Parcours</th>
+        <th style="width:9%">Verdict</th><th style="width:11%">Date</th>
+        <th style="width:15%">Rôle de session testé</th><th>Observation — <b>phrase exacte affichée</b> en cas de KO</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>T0</td><td>Poste neuf&nbsp;: assistant et base</td>
+        <td class="verdict nj" contenteditable>NJ</td><td contenteditable>&nbsp;</td>
+        <td contenteditable>—</td><td contenteditable>&nbsp;</td></tr>
+      <tr><td>T1</td><td>Amorçage et session</td>
+        <td class="verdict nj" contenteditable>NJ</td><td contenteditable>&nbsp;</td>
+        <td contenteditable>Administrateur</td><td contenteditable>&nbsp;</td></tr>
+      <tr><td>T2</td><td>CRUD de référence</td>
+        <td class="verdict nj" contenteditable>NJ</td><td contenteditable>&nbsp;</td>
+        <td contenteditable>Administrateur</td><td contenteditable>&nbsp;</td></tr>
+      <tr><td>T3</td><td>Deux postes en synchro</td>
+        <td class="verdict nj" contenteditable>NJ</td><td contenteditable>&nbsp;</td>
+        <td contenteditable>Administrateur ×2</td><td contenteditable>&nbsp;</td></tr>
+      <tr><td>T4</td><td>Droits à l'écran</td>
+        <td class="verdict nj" contenteditable>NJ</td><td contenteditable>&nbsp;</td>
+        <td contenteditable>Lecteur, Comptable, Utilisateur</td><td contenteditable>&nbsp;</td></tr>
+      <tr><td>T5</td><td>Écran Rôles et permissions</td>
+        <td class="verdict nj" contenteditable>NJ</td><td contenteditable>&nbsp;</td>
+        <td contenteditable>Administrateur</td><td contenteditable>&nbsp;</td></tr>
+      <tr><td>T6</td><td>Thème, alertes, panne, brute-force</td>
+        <td class="verdict nj" contenteditable>NJ</td><td contenteditable>&nbsp;</td>
+        <td contenteditable>—</td><td contenteditable>&nbsp;</td></tr>
+    </tbody>
+  </table>
+
+  <div class="encadre note">
+    <span class="t">Comment saisir un verdict</span>
+    <p>Cliquer dans la case <b>Verdict</b> et remplacer <code>NJ</code> par <code>OK</code> ou <code>KO</code>.
+      Une case <b>Observation</b> vide avec verdict <code>OK</code> est acceptable&nbsp;; un <code>KO</code> sans
+      phrase exacte ne l'est pas — c'est ce qui rend l'anomalie corrigeable.</p>
+  </div>
+
+  <h2>Registre des anomalies</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:7%">N°</th><th style="width:9%">Parcours</th><th style="width:16%">Écran</th>
+        <th style="width:12%">Gravité</th><th style="width:26%">Symptôme&nbsp;: phrase exacte, texte coupé, bouton</th>
+        <th style="width:14%">Transmis à l'agent</th><th>Statut</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td contenteditable>1</td><td contenteditable>T…</td><td contenteditable>&nbsp;</td>
+        <td contenteditable>bloquant / majeur / mineur</td><td contenteditable>&nbsp;</td>
+        <td contenteditable>oui / non</td><td contenteditable>ouvert</td></tr>
+      <tr><td contenteditable>2</td><td contenteditable>&nbsp;</td><td contenteditable>&nbsp;</td>
+        <td contenteditable>&nbsp;</td><td contenteditable>&nbsp;</td>
+        <td contenteditable>&nbsp;</td><td contenteditable>&nbsp;</td></tr>
+      <tr><td contenteditable>3</td><td contenteditable>&nbsp;</td><td contenteditable>&nbsp;</td>
+        <td contenteditable>&nbsp;</td><td contenteditable>&nbsp;</td>
+        <td contenteditable>&nbsp;</td><td contenteditable>&nbsp;</td></tr>
+      <tr><td contenteditable>4</td><td contenteditable>&nbsp;</td><td contenteditable>&nbsp;</td>
+        <td contenteditable>&nbsp;</td><td contenteditable>&nbsp;</td>
+        <td contenteditable>&nbsp;</td><td contenteditable>&nbsp;</td></tr>
+      <tr><td contenteditable>5</td><td contenteditable>&nbsp;</td><td contenteditable>&nbsp;</td>
+        <td contenteditable>&nbsp;</td><td contenteditable>&nbsp;</td>
+        <td contenteditable>&nbsp;</td><td contenteditable>&nbsp;</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Échelle des gravités</h2>
+  <table>
+    <thead><tr><th style="width:16%">Gravité</th><th>Définition retenue</th></tr></thead>
+    <tbody>
+      <tr><td><b>bloquant</b></td><td>Le poste ne travaille pas&nbsp;: écran qui plante, écriture impossible
+        alors que le droit existe, données qui disparaissent.</td></tr>
+      <tr><td><b>majeur</b></td><td>Le travail se fait, mais une garantie manque&nbsp;: un bouton non grisé,
+        un second poste qui ne se recharge pas, un message technique à l'écran.</td></tr>
+      <tr><td><b>mineur</b></td><td>Gêne de confort&nbsp;: libellé coupé, contraste faible en thème sombre,
+        alignement, glyphe absent.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Clôture de la fiche</h2>
+  <table>
+    <tbody>
+      <tr><th style="width:30%">Parcours joués</th><td contenteditable class="couleur-case">… / 7</td>
+        <th style="width:22%">Anomalies bloquantes</th><td contenteditable class="couleur-case">0</td></tr>
+      <tr><th>Décision</th>
+        <td colspan="3" contenteditable class="couleur-case">□ socle recevable &nbsp;&nbsp; □ recevable avec anomalies mineures &nbsp;&nbsp; □ non recevable</td></tr>
+      <tr><th>Commentaire pour l'agent</th><td colspan="3" contenteditable class="couleur-case">&nbsp;</td></tr>
+      <tr><th>Date de clôture</th><td contenteditable class="couleur-case">&nbsp;</td>
+        <th>Prochain jeu prévu</th><td contenteditable class="couleur-case">&nbsp;</td></tr>
+    </tbody>
+  </table>
+
+  <div class="encadre attention">
+    <span class="t">Après chaque jeu</span>
+    <p>Copier cette fiche remplie dans le suivi du produit (ou l'imprimer en PDF), et transmettre à
+      l'<span class="qui qui-agent">Agent</span> uniquement&nbsp;: <b>le numéro du parcours, l'écran,
+      la phrase exacte</b>. Le reste se déduit du code.</p>
+  </div>
+
+  <footer class="pied">04-manuel-test/fiche-de-recette.html — à recopier pour chaque campagne
+    (jeu initial, puis après chaque brique livrée). La version remplie ne se commite pas dans le
+    dépôt du cadre&nbsp;: elle appartient au dossier d'installation du produit.</footer>
+
+</div>
+</body>
+</html>

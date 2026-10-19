@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cahier des charges — socle Framework</title>
+<link rel="stylesheet" href="../assets/doc.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page-head">
+    <div class="rubrique">03 · Plan</div>
+    <h1>Cahier des charges du socle</h1>
+    <p class="lede">Ce document décide de ce que le cadre doit fournir, de ce qu'il refuse de
+      fournir, et de la barre à passer pour qu'une brique soit dite livrée. Il se relit avant
+      chaque tour de chantier.</p>
+    <div class="meta">
+      <span>Version&nbsp;: <b>1.0</b></span>
+      <span>Aligné sur&nbsp;: <b>commit fefb865</b> (19/10/2026)</span>
+      <span>Statut&nbsp;: <span class="statut en-cours">vivant</span></span>
+    </div>
+  </header>
+
+  <nav class="fils"><a href="../index.html">Accueil</a> › 03 · Plan › <b>Cahier des charges</b></nav>
+
+  <h2>1 · Objet</h2>
+  <p>Fournir un <b>squelette d'application desktop d'entreprise</b> — .NET 8 / WPF / PostgreSQL —
+    assez complet pour qu'un produit de gestion multi-postes démarre en deux heures et non en deux
+    mois, sans contenir la moindre ligne de métier. Le cadre se juge sur trois choses&nbsp;:
+    la propreté de ses dépendances, la robustesse de ses mécanique transverses, et la fidélité de
+    sa documentation.</p>
+
+  <h2>2 · Acteurs</h2>
+  <table>
+    <thead><tr><th style="width:20%">Acteur</th><th style="width:34%">Ce qu'il fait</th><th>Ce dont il a besoin</th></tr></thead>
+    <tbody>
+      <tr><td><span class="qui qui-agent">Agent</span> (moi)</td>
+        <td>Écrit le code, les tests, la documentation&nbsp;; build, commit, push sur ordre.</td>
+        <td>Un périmètre écrit&nbsp;; une barre de qualité non négociable&nbsp;; un ordre explicite pour pousser.</td></tr>
+      <tr><td><span class="qui qui-vous">Exploitant</span> (vous)</td>
+        <td>Décide des tours, valide en jouant les écrans, tranche l'indécidable, donne l'ordre de push.</td>
+        <td>Des recettes qui disent <b>qui</b> agit à chaque ligne&nbsp;; des verdicts binaires.</td></tr>
+      <tr><td><span class="qui qui-poste">Poste</span> (utilisateur final)</td>
+        <td>Travaille&nbsp;: liste, formulaire, impression, export.</td>
+        <td>Des phrases françaises, jamais une trame technique&nbsp;; des boutons qui refusent
+          proprement plutôt que de planter.</td></tr>
+      <tr><td>Éditeur du produit</td>
+        <td>Tient sa clé HMAC de licence, émet les codes, signe les mises à jour.</td>
+        <td>Un cadre qui ne contient <b>aucun</b> de ses secrets.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>3 · Périmètre</h2>
+  <table>
+    <thead><tr><th style="width:50%">Dans le cadre</th><th>Hors du cadre — et pour quoi</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Mécanique transverses&nbsp;: session, droits, données, synchro temps réel, réglages,
+          chiffrement, licence, export, rapport, thème, navigation, mise à jour, télémétrie.</td>
+        <td><b>La politique de droits du produit.</b> <code>MatriceParDefaut</code> est un départ
+          didactique à trois rôles&nbsp;; la vraie matrice s'écrit ailleurs.</td></tr>
+      <tr>
+        <td>Un écran CRUD <b>de référence</b> complet (liste, formulaire, suppression logique,
+          temps réel, droits) et un écran de lecture de la matrice.</td>
+        <td><b>Les vraies tables métier.</b> <code>ExempleEntity</code> se supprime dès la première
+          entité du produit.</td></tr>
+      <tr>
+        <td>Une migration <code>Initial</code> fournie et une fabrique de conception qui lit les
+          réglages du poste.</td>
+        <td><b>La gestion des comptes.</b> Aucun écran de création de compte&nbsp;: à ce jour,
+          l'amorce crée le premier compte Administrateur, et le reste passe par SQL.</td></tr>
+      <tr>
+        <td>Assistant réseau autonome (test, création de base, enregistrement à chaud).</td>
+        <td><b>Le choix du serveur.</b> PostgreSQL est une décision du cadre&nbsp;; MSSQL ou MySQL
+          ne sont pas prévus et demanderaient un second provider.</td></tr>
+      <tr>
+        <td>Services d'export CSV et de rapport PDF, testés.</td>
+        <td><b>Leur branchement d'écran.</b> Le cadre fournit le service&nbsp;; le contenu du rapport
+          appartient au produit.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>4 · Exigences fonctionnelles</h2>
+  <table>
+    <thead><tr><th style="width:9%">ID</th><th style="width:31%">Exigence</th><th style="width:14%">Statut</th><th>Critère d'acceptation</th></tr></thead>
+    <tbody>
+      <tr><td>EF-01</td><td>Connexion et session avec anti-force-brute</td><td><span class="statut livre">livré</span></td>
+        <td>3 échecs → gel 60 s piloté par <code>IHorloge</code>&nbsp;; message identique pour
+          utilisateur inconnu et mauvais mot de passe.</td></tr>
+      <tr><td>EF-02</td><td>Amorce du premier compte sur une base vide</td><td><span class="statut livre">livré</span></td>
+        <td>Impossible d'amorcer deux fois&nbsp;; le premier compte est Administrateur.</td></tr>
+      <tr><td>EF-03</td><td>RBAC&nbsp;: matrice déclarée en code, héritage, rôle inconnu = zéro droit</td>
+        <td><span class="statut livre">livré</span></td>
+        <td>Wildcards et cycles testés&nbsp;; un rôle absent de la matrice n'ouvre aucun écran,
+          y compris par le bouton Retour.</td></tr>
+      <tr><td>EF-04</td><td>Barre latérale et écrans filtrés par la session, sans redémarrage</td>
+        <td><span class="statut livre">livré</span></td>
+        <td>Changement de session = sidebar recalculée ET écran devenu interdit rendu.</td></tr>
+      <tr><td>EF-05</td><td>CRUD de référence avec suppression logique</td><td><span class="statut livre">livré</span></td>
+        <td>Un <code>Remove</code> laisse la ligne en base avec <code>IsDeleted</code> et
+          <code>DeletedAt</code>&nbsp;; le filtre global la cache.</td></tr>
+      <tr><td>EF-06</td><td>Synchro temps réel inter-postes avec anti-écho</td><td><span class="statut livre">livré</span></td>
+        <td>Le poste émetteur ne recharge pas&nbsp;; les autres si. Deux instances sur la même
+          machine suffisent à le prouver.</td></tr>
+      <tr><td>EF-07</td><td>Assistant réseau autonome et reconfiguration à chaud</td><td><span class="statut livre">livré</span></td>
+        <td>Poste non configuré → assistant ouvert d'office&nbsp;; après enregistrement,
+          aucun redémarrage.</td></tr>
+      <tr><td>EF-08</td><td>Écran de lecture de la matrice</td><td><span class="statut livre">livré</span></td>
+        <td>Rôles, descriptions, héritage, permissions aplatis, session courante marquée,
+          rôles sans issue signalés.</td></tr>
+      <tr><td>EF-09</td><td>Licence par poste (HWID) et vérification en ligne tolérante</td>
+        <td><span class="statut livre">livré</span></td>
+        <td>Statut = signature + empreinte + date&nbsp;; une panne réseau ne révoque jamais.</td></tr>
+      <tr><td>EF-10</td><td>Export CSV et rapport PDF</td><td><span class="statut livre">livré</span></td>
+        <td>RFC 4180, point-virgule + BOM&nbsp;; PDF A4 ouvert et lisible.</td></tr>
+      <tr><td>EF-11</td><td>Écran de gestion des comptes (création, rôle, activation)</td>
+        <td><span class="statut a-faire">à faire</span></td>
+        <td>Un Administrateur crée un Lecteur <b>sans SQL</b>&nbsp;; la sidebar d'un poste ouvert
+          suit le changement à la reconnexion.</td></tr>
+      <tr><td>EF-12</td><td>Écran paramétrage du poste (thème, accent, canal de synchro, licence)</td>
+        <td><span class="statut a-faire">à faire</span></td>
+        <td>Gardé par <code>parametres.gerer</code>&nbsp;; aucune modification sans redémarrage
+          hormis le canal.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>5 · Exigences non fonctionnelles</h2>
+  <table>
+    <thead><tr><th style="width:9%">ID</th><th style="width:30%">Exigence</th><th>Vérification</th></tr></thead>
+    <tbody>
+      <tr><td>EN-01</td><td>Build Release à 0 erreur <b>et</b> 0 avertissement</td>
+        <td><span class="qui qui-agent">Agent</span> <code>dotnet build Framework.sln -c Release</code> avant chaque commit.</td></tr>
+      <tr><td>EN-02</td><td>Suite automatique 100&nbsp;% verte, sans base réelle</td>
+        <td><span class="qui qui-agent">Agent</span> <code>dotnet test</code>&nbsp;; 162 tests à ce jour, EF InMemory
+          et horloge pilotée uniquement.</td></tr>
+      <tr><td>EN-03</td><td>Aucun secret en dur, aucun réglage local committé</td>
+        <td><code>.gitignore</code> exclut <code>settings.json</code>, <code>licence.*</code>, <code>bin/</code>,
+          <code>obj/</code>&nbsp;; chaînes de connexion vides par conception.</td></tr>
+      <tr><td>EN-04</td><td>Langage d'interface 100&nbsp;% français, technique traduite</td>
+        <td><span class="qui qui-vous">Exploitant</span> parcours T6&nbsp;; trame Npgsql uniquement dans le journal.</td></tr>
+      <tr><td>EN-05</td><td>Aucune écriture sans Unit of Work&nbsp;; aucun contexte retenu par un écran</td>
+        <td>Revue de code&nbsp;: portée DI créée et libérée par opération.</td></tr>
+      <tr><td>EN-06</td><td>Le temps se lit dans <code>IHorloge</code></td>
+        <td>Aucun <code>DateTime.Now</code> dans les briques&nbsp;; les gels et expirations se testent
+          en avançant l'horloge.</td></tr>
+      <tr><td>EN-07</td><td>Durcissement par défaut&nbsp;: rôle inconnu zéro droit, table absente
+        refusée, fichier cabossé redémarré à vide</td><td>Tests dédiés dans la suite.</td></tr>
+      <tr><td>EN-08</td><td>Robustesse réseau&nbsp;: <code>EnableRetryOnFailure</code> + stratégie explicite</td>
+        <td>Toute transaction passe par <code>ExecuteInTransactionAsync</code>.</td></tr>
+      <tr><td>EN-09</td><td>Documentation tenue au commit</td>
+        <td><a href="../index.html">index</a> &nbsp;: engagement de mise à jour&nbsp;; le blueprint et ce dossier
+          avancent avec le code.</td></tr>
+      <tr><td>EN-10</td><td>Isolation stricte du périmètre de travail</td>
+        <td>Tout se passe dans <code>Framework.*</code> et <code>Framework.sln</code>&nbsp;: <b>aucun fichier
+          d'un produit voisin n'est touché</b>, jamais.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>6 · Contraintes techniques</h2>
+  <ul>
+    <li>.NET 8, WPF (<code>net8.0-windows</code> pour l'UI et les briques Windows), EF Core 9 + Npgsql.</li>
+    <li>Sens de dépendance unique&nbsp;: <code>WPF → Common → Core</code>, <code>WPF → Data → Core</code>&nbsp;;
+      Data et Common ne se connaissent pas.</li>
+    <li>Versions de paquets épinglées (voir <a href="../01-structure/architecture.html">architecture</a>)&nbsp;;
+      une montée de version se justifie, elle ne se glisse pas.</li>
+    <li>Un seul canal LISTEN/NOTIFY par produit&nbsp;; l'identifiant de poste est l'<code>Application Name</code>
+      de la connexion.</li>
+    <li>Commit conventionnel et modulaire&nbsp;: une brique = un commit = une portée décrite&nbsp;;
+      message en français.</li>
+  </ul>
+
+  <h2>7 · Définition de « terminé »</h2>
+  <div class="encadre attendu">
+    <span class="t">Une brique est livrée quand</span>
+    <p>le code compile en Release à 0 erreur et 0 avertissement <b>et</b> la suite est 100&nbsp;% verte
+      <b>et</b> les cas limites sont testés, pas seulement le chemin heureux <b>et</b> le blueprint est
+      à jour <b>et</b> les pages de ce dossier le sont <b>et</b> le commit est propre et documenté
+      <b>et</b> la partie qui ne peut pas être prouvée en test (rendu, ressenti, réseau réel) est
+      nommée dans le rapport et reportée à l'exploitant sous forme de recette jouable.</p>
+  </div>
+
+  <h2>8 · Risques et dettes assumées</h2>
+  <table>
+    <thead><tr><th style="width:34%">Risque</th><th style="width:14%">Gravité</th><th>Mesure prise ou proposée</th></tr></thead>
+    <tbody>
+      <tr><td>Aucun écran de gestion des comptes&nbsp;: les rôles se posent en SQL</td>
+        <td><span class="statut en-cours">moyenne</span></td><td>EF-11&nbsp;; en attendant, la recette T4
+          donne la requête exacte.</td></tr>
+      <tr><td>Le rendu WPF n'est jamais prouvé par la suite automatique</td>
+        <td><span class="statut en-cours">moyenne</span></td><td>Plan de qualification T0→T6 joué par
+          l'exploitant&nbsp;; <a href="../04-manuel-test/fiche-de-recette.html">fiche de recette</a> comme preuve.</td></tr>
+      <tr><td>Services PDF/CSV/licence non consommés par un écran</td>
+        <td><span class="statut a-faire">faible</span></td><td>Leur premier branchement se fait sur la
+          table métier du produit, pas sur <code>Exemples</code>.</td></tr>
+      <tr><td>Un seul <code>SyncChannel</code> par poste&nbsp;: deux produits sur le même serveur se
+        croisent s'ils partagent le nom</td><td><span class="statut en-cours">moyenne</span></td>
+        <td>Documenté&nbsp;; le produit doit se l'approprier à la composition root.</td></tr>
+      <tr><td>La migration <code>Initial</code> contient du SQL de trigger écrit à la main</td>
+        <td><span class="statut hors">haute</span></td><td>Le piège <code>migrations remove</code> est
+          consigné&nbsp;; une brique future pourra industrialiser l'ajout de trigger par table.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>9 · Validation</h2>
+  <table>
+    <thead><tr><th style="width:34%">Décision</th><th>Qui tranche</th></tr></thead>
+    <tbody>
+      <tr><td>Choix d'un tour de chantier, arbitrage de périmètre</td><td><span class="qui qui-vous">Exploitant</span></td></tr>
+      <tr><td>Ordre de pousser sur <code>main</code></td><td><span class="qui qui-vous">Exploitant</span> — l'agent ne pousse jamais de sa propre initiative</td></tr>
+      <tr><td>Acceptation technique d'une brique (gates)</td><td><span class="qui qui-agent">Agent</span>, preuves à l'appui</td></tr>
+      <tr><td>Acceptation fonctionnelle d'un écran</td><td><span class="qui qui-vous">Exploitant</span>, après jeu manuel</td></tr>
+    </tbody>
+  </table>
+
+  <footer class="pied">03-plan/cahier-des-charges.html — relire et re-dater cette page avant chaque tour&nbsp;;
+    une exigence ajoutée en cours de route se numérote et ne remplace pas une exigence acceptée.</footer>
+
+</div>
+</body>
+</html>

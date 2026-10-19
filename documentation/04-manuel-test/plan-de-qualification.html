@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plan de qualification — Framework</title>
+<link rel="stylesheet" href="../assets/doc.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page-head">
+    <div class="rubrique">04 · Manuel de test</div>
+    <h1>Plan de qualification — les sept parcours exploitant</h1>
+    <p class="lede">La suite automatique prouve les décisions (droits, calculs, cycles de vie).
+      Elle ne prouve <b>pas</b> le rendu, les vrais <code>IsEnabled</code>, les glyphes Segoe MDL2,
+      ni le LISTEN/NOTIFY sur un vrai serveur. Ces sept parcours sont la seule preuve de ce dernier
+      tiers — et ils ne peuvent être joués que par un humain devant un poste.</p>
+    <div class="meta">
+      <span>Durée totale&nbsp;: <b>≈ 70 min</b> (dont 25 min pour T3–T4)</span>
+      <span>Postes requis&nbsp;: <b>1</b>, et <b>2</b> pour T3</span>
+      <span>Rendu attendu&nbsp;: verdicts dans la <a href="fiche-de-recette.html">fiche de recette</a></span>
+    </div>
+  </header>
+
+  <nav class="fils"><a href="../index.html">Accueil</a> › 04 · Manuel de test › <b>Plan de qualification</b></nav>
+
+  <h2>Carte des parcours</h2>
+  <table>
+    <thead><tr><th style="width:9%">ID</th><th style="width:30%">Parcours</th><th style="width:12%">Acteur principal</th><th>Ce qu'il prouve — et que rien d'autre ne prouve</th></tr></thead>
+    <tbody>
+      <tr><td>T0</td><td>Poste neuf&nbsp;: assistant et base</td><td>Exploitant</td>
+        <td>Configuration autonome, création de base, application de la migration et présence du trigger.</td></tr>
+      <tr><td>T1</td><td>Amorçage et session</td><td>Exploitant</td>
+        <td>Premier compte forcé Administrateur, chip utilisateur, ouverture et fermeture de session.</td></tr>
+      <tr><td>T2</td><td>CRUD de référence</td><td>Exploitant</td>
+        <td>Rendu de la liste et du formulaire, validations à l'écran, suppression logique réelle.</td></tr>
+      <tr><td>T3</td><td>Deux postes en synchro</td><td>Exploitant</td>
+        <td>Notify réel, anti-écho, recharge de la bonne table au bon moment.</td></tr>
+      <tr><td>T4</td><td>Droits à l'écran</td><td>Exploitant</td>
+        <td>Sidebar filtrée, boutons grisés, refus à l'exécution, défaut sûr sur rôle inconnu.</td></tr>
+      <tr><td>T5</td><td>Écran Rôles et permissions</td><td>Exploitant</td>
+        <td>Lisibilité de la matrice, badge de session courante, phrases de l'écran.</td></tr>
+      <tr><td>T6</td><td>Transverse&nbsp;: thème, alertes, panne, brute-force</td><td>Exploitant</td>
+        <td>Lecture en thème sombre, message français sur vraie panne, gel de compte à l'usage.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="encadre attention">
+    <span class="t">Avant de commencer</span>
+    <p>Notez pour chaque parcours le <b>numéro, l'écran et la phrase exacte affichée</b> si ça coince&nbsp;:
+      c'est la forme sous laquelle une anomalie devient corrigeable. Les verdicts se consignent
+      <a href="fiche-de-recette.html">ici</a>.</p>
+  </div>
+
+  <!-- ═══════════════ T0 ═══════════════ -->
+  <div class="fiche">
+    <h2>T0 · Poste neuf&nbsp;: assistant réseau et base</h2>
+    <div class="corps">
+      <p class="lede" style="margin-top:12px">Prérequis&nbsp;: PostgreSQL 14+ joignable, un compte de
+        connexion, et aucun <code>settings.json</code> sur le poste.</p>
+      <table>
+        <thead><tr><th style="width:14%">Qui</th><th style="width:43%">Étape</th><th>Attendu</th></tr></thead>
+        <tbody>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td>
+            <td>Lancer <code>FrameworkDemo.exe</code> (ou <code>dotnet run --project Framework.WPF</code>)</td>
+            <td>Aucun [ERR]&nbsp;: l'assistant de configuration s'ouvre de lui-même.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Saisir hôte, port, base, utilisateur, mot de passe, SSL&nbsp;; <b>Tester la connexion</b></td>
+            <td>Verdict en français citant la cause réelle&nbsp;; un port non numérique ou un champ vide demande une correction <b>avant</b> tout appel réseau.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td><b>Enregistrer et fermer</b></td>
+            <td>Si la base est absente&nbsp;: «&nbsp;La base a été créée sur le serveur.&nbsp;». La fenêtre se ferme
+              sur un poste prêt, sans redémarrage&nbsp;: le resolver relit les réglages à chaud.</td></tr>
+          <tr><td><span class="qui qui-outil">Outil</span></td>
+            <td><code>dotnet ef database update --project Framework.Data</code></td>
+            <td><code>Initial</code> appliquée&nbsp;: tables <code>Comptes</code> et <code>Exemples</code>.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td>
+            <td><code>SELECT tgname FROM pg_trigger WHERE tgname LIKE 'TX_sync%';</code></td>
+            <td><b>Deux lignes.</b> Sans elles, T3 est impossible — c'est le contrôle le plus important de tout le plan.</td></tr>
+        </tbody>
+      </table>
+      <div class="encadre danger"><span class="t">Si ça échoue</span>
+        <p>Journal <code>%AppData%\{NomApplication}\Logs\app-{date}.log</code>&nbsp;; le SQLSTATE traduit est
+          dans <code>MessageResultat</code>. Un nom de base hors whitelist se refuse avant tout appel.</p></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ T1 ═══════════════ -->
+  <div class="fiche">
+    <h2>T1 · Amorçage et session</h2>
+    <div class="corps">
+      <table>
+        <thead><tr><th style="width:14%">Qui</th><th style="width:43%">Étape</th><th>Attendu</th></tr></thead>
+        <tbody>
+          <tr><td><span class="qui qui-poste">Poste</span></td><td>Base vide → écran de connexion</td>
+            <td>Le titre bascule en <b>création du premier compte</b> et demande nom complet + mot de passe.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Créer le compte, se connecter</td>
+            <td>Rôle <b>Administrateur</b> sans qu'on ait eu le choix&nbsp;; la barre latérale montre le nom, le rôle,
+              et les trois entrées.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Se reconnecter une deuxième fois</td>
+            <td>L'amorce est <b>fermée</b>&nbsp;: plus de création de premier compte, connexion classique.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td><b>Fermer la session</b></td>
+            <td>Retour à la connexion <b>et</b> la barre latérale retombe à « Tableau de bord » seul&nbsp;; l'écran
+              rendu est le tableau de bord.</td></tr>
+        </tbody>
+      </table>
+      <div class="encadre danger"><span class="t">Défaut à ne jamais accepter</span>
+        <p>Une entrée d'écran encore visible après fermeture de session, ou un écran protégé resté à l'affichage,
+          est un défaut de sécurité — pas un détail graphique.</p></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ T2 ═══════════════ -->
+  <div class="fiche">
+    <h2>T2 · Écran CRUD de référence</h2>
+    <div class="corps">
+      <table>
+        <thead><tr><th style="width:14%">Qui</th><th style="width:43%">Étape</th><th>Attendu</th></tr></thead>
+        <tbody>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td>
+            <td><b>Nouvelle ligne</b> → libellé <code>Alpha</code>, catégorie <code>Stock</code>, montant <code>1250,50</code>, <b>Enregistrer</b></td>
+            <td>La ligne apparaît, formulaire vidé, espace (ex.&nbsp;«&nbsp;<code> Alpha </code>&nbsp;») nettoyé.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Libellé vide → Enregistrer</td>
+            <td>«&nbsp;Le libellé est obligatoire.&nbsp;» — rien n'est écrit.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Montant <code>10,123</code></td>
+            <td>Message «&nbsp;deux décimales&nbsp;».</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Montant <code>non, mais</code></td>
+            <td>Message «&nbsp;un nombre, séparateur décimal compris&nbsp;».</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td>
+            <td>Trois lignes dans deux catégories, filtre <code>stock</code> puis <b>Actualiser</b></td>
+            <td>Le filtre ne se déclenche <b>pas</b> à la frappe — seulement sur le bouton&nbsp;; liste triée
+              catégorie puis libellé.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Sélectionner une ligne</td>
+            <td>Formulaire pré-rempli, titre «&nbsp;Modifier la ligne&nbsp;», «&nbsp;Supprimer la ligne&nbsp;» devient actif.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td><b>Supprimer la ligne</b>, puis contrôle SQL</td>
+            <td>Disparaît de la liste, <b>pas</b> de la base&nbsp;:
+              <code>SELECT "Libelle","IsDeleted","DeletedAt" FROM "Exemples";</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════ T3 ═══════════════ -->
+  <div class="fiche">
+    <h2>T3 · Deux postes, temps réel</h2>
+    <div class="corps">
+      <div class="encadre note"><span class="t">Astuce</span>
+        <p>Deux instances du même exécutable sur la même machine suffisent&nbsp;: l'anti-écho se base sur
+          <code>framework-{MachineName}-{ProcessId}</code>, donc deux PID = deux postes.</p></div>
+      <table>
+        <thead><tr><th style="width:14%">Qui</th><th style="width:43%">Étape</th><th>Attendu</th></tr></thead>
+        <tbody>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Lancer un second <code>FrameworkDemo.exe</code>, se connecter, ouvrir Exemples sur A et B</td>
+            <td>Les deux listes identiques&nbsp;; puce d'état «&nbsp;Écoute inter-postes en cours&nbsp;».</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Sur <b>A</b>, enregistrer une ligne</td>
+            <td>Sur <b>B</b>&nbsp;: la ligne apparaît <b>sans clic</b> et l'état dit
+              «&nbsp;Liste rechargée&nbsp;: un autre poste a modifié la table «&nbsp;Exemples&nbsp;»&nbsp;». Sur <b>A</b>, cette phrase
+              n'apparaît <b>pas</b> (anti-écho).</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Regarder la puce du haut sur B</td>
+            <td>«&nbsp;Dernière notification&nbsp;: Exemples (I)&nbsp;», ou (U)/(D) selon l'opération.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Sur A, supprimer une ligne</td>
+            <td>Elle disparaît sur B.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Pendant une frappe sur B (formulaire ouvert), modifier sur A</td>
+            <td>B ne percute pas son propre ordre en cours&nbsp;: la recharge se fait à la fin de la commande.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Ouvrir le <b>tableau de bord</b> sur B, modifier sur A</td>
+            <td>Le compteur du tableau de bord s'incrémente aussi — le messager faible est bien partagé.</td></tr>
+        </tbody>
+      </table>
+      <div class="encadre danger"><span class="t">Si B ne se recharge pas</span>
+        <p>Dans l'ordre&nbsp;: (1) le trigger <code>TX_sync_Exemples</code> existe-t-il (T0)&nbsp;; (2) les deux postes
+          ont-ils le <b>même</b> <code>SyncChannel</code>&nbsp;; (3) le journal de B montre-t-il la reconnexion
+          de l'écouteur (backoff 1→30 s après coupure serveur).</p></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ T4 ═══════════════ -->
+  <div class="fiche">
+    <h2>T4 · Droits à l'écran — le parcours qui compte</h2>
+    <div class="corps">
+      <div class="encadre attention"><span class="t">Pourquoi du SQL</span>
+        <p>Aucun écran de gestion des comptes n'existe à ce jour (brique <b>P1</b> de la feuille de route)&nbsp;:
+          c'est donc vous, en support, qui posez les rôles en base. Le mot de passe reste le même&nbsp;:
+          on duplique la colonne <code>"PasswordHash"</code>.</p></div>
+      <table>
+        <thead><tr><th style="width:14%">Qui</th><th style="width:43%">Étape</th><th>Attendu</th></tr></thead>
+        <tbody>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td>
+            <td>Créer un compte lecture&nbsp;:
+<pre style="margin:6px 0 0"><code>INSERT INTO "Comptes"
+ ("Id","Username","NomComplet","Role","PasswordHash",
+  "Actif","EchecsConsecutifs","CreatedAt","IsDeleted")
+SELECT gen_random_uuid(),'lecture','Poste accueil','Lecteur',
+       "PasswordHash",true,0,now(),false
+FROM "Comptes" WHERE "Username"='votre_admin';</code></pre></td>
+            <td>Un compte <b>Lecteur</b> avec le même mot de passe que l'admin.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Se déconnecter, se reconnecter en <code>lecture</code>, ouvrir Exemples</td>
+            <td>Les trois entrées restent (Lecteur tient <code>exemples.consulter</code> et <code>droits.consulter</code>),
+              mais <b>«&nbsp;Enregistrer&nbsp;» et «&nbsp;Supprimer la ligne&nbsp;» sont grisés</b>.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td>
+            <td>Contourner la vue&nbsp;: sélectionner une ligne, Valider au clavier (Entrée dans le formulaire),
+              ou passer par «&nbsp;Retour&nbsp;» après une modification de rôle</td>
+            <td>Message «&nbsp;<b>Droits insuffisants pour enregistrer</b> depuis ce poste (rôle «&nbsp;Lecteur&nbsp;»)&nbsp;»
+              et <b>rien ne change en base</b>. C'est la preuve que la garde est dans la commande.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td>
+            <td><code>UPDATE "Comptes" SET "Role"='Comptable' WHERE "Username"='lecture';</code> puis reconnexion</td>
+            <td><b>Rôle inconnu de la matrice = zéro droit</b>&nbsp;: plus que «&nbsp;Tableau de bord&nbsp;» dans la barre
+              latérale, Exemples injoignable.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td>
+            <td>Repasser en <code>'Utilisateur'</code></td>
+            <td>Écriture autorisée sur Exemples, «&nbsp;Rôles et permissions&nbsp;» encore visible —
+              c'est l'<b>héritage de Lecteur</b> qui le prouve à l'écran.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td>
+            <td>Poste resté ouvert&nbsp;: changer le rôle d'un compte connecté, puis <b>Fermer la session</b> et se reconnecter</td>
+            <td>La barre latérale et l'écran rendu suivent la nouvelle session sans redémarrage.</td></tr>
+        </tbody>
+      </table>
+      <div class="encadre note"><span class="t">Ré-armement</span>
+        <p>Compte gelé après trois échecs&nbsp;:
+          <code>UPDATE "Comptes" SET "EchecsConsecutifs"=0, "GelJusqua"=NULL WHERE "Username"='lecture';</code></p></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ T5 ═══════════════ -->
+  <div class="fiche">
+    <h2>T5 · Écran Rôles et permissions</h2>
+    <div class="corps">
+      <table>
+        <thead><tr><th style="width:14%">Qui</th><th style="width:43%">Étape</th><th>Attendu</th></tr></thead>
+        <tbody>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Ouvrir «&nbsp;Rôles et permissions&nbsp;» en Administrateur</td>
+            <td>Ligne d'état «&nbsp;<em>votre nom</em> — rôle «&nbsp;Administrateur&nbsp;»&nbsp;»&nbsp;; trois cartes.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Lire la carte Administrateur</td>
+            <td>«&nbsp;<b>toutes permissions</b>&nbsp;» et le résumé <code>«&nbsp;*&nbsp;»&nbsp;: tous les écrans, toutes les écritures…</code>
+              — la liste des permissions n'est pas déroulée&nbsp;: c'est voulu.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Lire Utilisateur</td>
+            <td>«&nbsp;Hérite de&nbsp;: Lecteur&nbsp;», <b>10 permissions</b>, dont <code>droits.consulter</code> venu du dessus.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Lire Lecteur</td>
+            <td>«&nbsp;Hérite de&nbsp;: aucun&nbsp;», le lot en lecture seule.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Recharger après changement de session</td>
+            <td>Le badge «&nbsp;session courante&nbsp;» bouge sur le bon rôle.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Bandeau d'avertissement</td>
+            <td><b>Vide en matrice par défaut.</b> Il ne doit s'afficher que si un rôle déclaré ne mène à aucun écran
+              — cas d'une matrice de produit, donc volontairement non reproductible ici.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Y aller en session «&nbsp;Comptable&nbsp;» (inconnu)</td>
+            <td>Écran inatteignable&nbsp;: l'entrée a disparu de la barre latérale. Si l'écran s'ouvre et refuse
+              avec une phrase, c'est le <b>bouton Retour</b> qui l'a atteint&nbsp;→ à me signaler.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════ T6 ═══════════════ -->
+  <div class="fiche">
+    <h2>T6 · Transverse&nbsp;: thème, alertes, panne, brute-force</h2>
+    <div class="corps">
+      <table>
+        <thead><tr><th style="width:14%">Qui</th><th style="width:43%">Étape</th><th>Attendu</th></tr></thead>
+        <tbody>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Bascule thème clair/sombre, sur les quatre écrans</td>
+            <td>Aucun texte illisible, aucun fond resté blanc&nbsp;; le choix survit au redémarrage.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Réduire / agrandir la barre latérale</td>
+            <td>Les libellés disparaissent, les glyphes restent centrés&nbsp;; la session en cours reste sélectionnée.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td>
+            <td>Faire tomber PostgreSQL (ou pointer le poste vers une base inexistante), puis <b>Actualiser</b> sur Exemples</td>
+            <td>Phrase française à l'écran («&nbsp;Serveur de données injoignable…&nbsp;»), growl d'erreur, liste
+              conservée en l'état&nbsp;; trame technique <b>uniquement</b> dans le journal.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Relancer le serveur, sans redémarrer le poste</td>
+            <td>La liste se recharge au prochain Actualiser&nbsp;; l'écouteur se reconnecte seul (backoff).</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Trois mauvais mots de passe sur le même compte</td>
+            <td>Gel annoncé, compte refusé pendant 60 s, puis connexion normale.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Bouton <b>Retour</b> après navigation</td>
+            <td>Il revient sur l'écran précédent <em>autorisé</em>&nbsp;; désactivé quand la pile est vide.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h2>Ce que ces parcours ne couvrent pas — volontairement</h2>
+  <ul>
+    <li><b>Impression / export CSV / rapport PDF</b>&nbsp;: services livrés et testés, mais aucun écran du socle
+      ne les consomme encore (brique <b>P3</b>).</li>
+    <li><b>Écran de gestion des comptes</b>&nbsp;: inexistant (brique <b>P1</b>) — d'où le SQL de T4.</li>
+    <li><b>Mise à jour Velopack</b>&nbsp;: non testable hors installation réelle&nbsp;; le wrapper rend
+      <code>null</code> et le poste tourne.</li>
+    <li><b>Résolution de noms / sites multiples</b>&nbsp;: hors périmètre du cadre.</li>
+  </ul>
+
+  <footer class="pied">04-manuel-test/plan-de-qualification.html — chaque parcours joué se consigne
+    <a href="fiche-de-recette.html">ici</a>&nbsp;; un parcours qui change de contenu change de numéro,
+    pas de verdict.</footer>
+
+</div>
+</body>
+</html>

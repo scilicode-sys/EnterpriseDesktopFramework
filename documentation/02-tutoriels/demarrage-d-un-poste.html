@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Démarrer un poste neuf — Framework</title>
+<link rel="stylesheet" href="../assets/doc.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page-head">
+    <div class="rubrique">02 · Tutoriels</div>
+    <h1>Démarrer un poste neuf</h1>
+    <p class="lede">De la machine vide au poste qui affiche des données, en sept étapes.
+      C'est aussi la recette de l'installateur sur site&nbsp;: chaque ligne dit qui l'exécute.</p>
+    <div class="meta">
+      <span>Durée&nbsp;: <b>10 min</b>, base déjà créée par l'assistant</span>
+      <span>Prérequis&nbsp;: <b>PostgreSQL 14+ joignable</b>, .NET 8 Desktop Runtime</span>
+      <span>Renvois&nbsp;: <a href="../04-manuel-test/plan-de-qualification.html">T0 et T1 du plan de qualification</a></span>
+    </div>
+  </header>
+
+  <nav class="fils"><a href="../index.html">Accueil</a> › 02 · Tutoriels › <b>Démarrer un poste neuf</b></nav>
+
+  <h2>Étapes</h2>
+
+  <div class="pas"><div class="n">1</div><div class="c">
+    <span class="qui qui-vous">Exploitant</span> Récupérer l'exécutable (dossier build ou installeur Velopack)
+    et le poser sur le poste. <b>Aucun</b> fichier <code>settings.json</code> ne se copie&nbsp;:
+    il contient host, base et utilisateur, et appartient au poste.
+    <div class="encadre note"><span class="t">Contrôle</span> Le premier lancement ne doit <b>pas</b> afficher
+    de message d'erreur&nbsp;: sans réglages, le poste ouvre l'assistant.</div>
+  </div></div>
+
+  <div class="pas"><div class="n">2</div><div class="c">
+    <span class="qui qui-poste">Poste</span> L'<b>assistant réseau</b> s'ouvre tout seul
+    (<code>ConnectionConfigWindow</code>)&nbsp;: hôte, port, base, utilisateur, mot de passe, SSL éventuel.
+  </div></div>
+
+  <div class="pas"><div class="n">3</div><div class="c">
+    <span class="qui qui-vous">Exploitant</span> Bouton <b>Tester la connexion</b>. Le diagnostic est rédigé en français
+    et cite la cause (SQLSTATE traduit), jamais une trame Npgsql.
+    <div class="encadre note"><span class="t">À savoir</span> <b>Tester ne crée rien</b> et n'enregistre rien&nbsp;:
+    il Valide uniquement le trajet poste → serveur → base.</div>
+  </div></div>
+
+  <div class="pas"><div class="n">4</div><div class="c">
+    <span class="qui qui-vous">Exploitant</span> Bouton <b>Enregistrer et fermer</b>. Le poste reteste, et si la base
+    est absente il la <b>crée</b> («&nbsp;La base a été créée sur le serveur.&nbsp;») — le nom de base est validé par
+    whitelist avant tout appel, et un compte sans droit de création rend la main avec une phrase explicite.
+    Les réglages partent ensuite dans <code>%LocalAppData%\{NomApplication}\settings.json</code> et le resolver de
+    connexion se reactualise <b>à chaud</b>&nbsp;: pas besoin de redémarrer le poste.
+  </div></div>
+
+  <div class="pas"><div class="n">5</div><div class="c">
+    <span class="qui qui-vous">Exploitant</span> Dans un terminal, à la racine du dépôt du produit&nbsp;:
+    <pre><code>dotnet tool install --global dotnet-ef --version 9.0.10   # une seule fois
+dotnet ef migrations list --project Framework.Data      # contrôle de lecture
+dotnet ef database update --project Framework.Data      # applique Initial + trigger</code></pre>
+    <div class="encadre danger"><span class="t">Toujours</span> passer <code>--project Framework.Data</code>.
+    Sans lui l'outil instancie le contexte hors DI et essaie de monter l'hôte de <code>App.xaml.cs</code>,
+    qui plante sur la <code>ResourceDictionary</code> WPF.</div>
+  </div></div>
+
+  <div class="pas"><div class="n">6</div><div class="c">
+    <span class="qui qui-outil">Outil</span> <code>psql</code> — vous vérifiez que la synchro est bien vivante&nbsp;:
+    <pre><code>SELECT tgname FROM pg_trigger WHERE tgname LIKE 'TX_sync%';
+-- attendu : TX_sync_Comptes  TX_sync_Exemples</code></pre>
+    Deux lignes, ou le temps réel ne marchera jamais et <b>rien ne le dira à l'écran</b>.
+  </div></div>
+
+  <div class="pas"><div class="n">7</div><div class="c">
+    <span class="qui qui-vous">Exploitant</span> Relancer le poste, puis écran de connexion. Sur une base vide,
+    il se transforme en <b>création du premier compte</b>&nbsp;: identifiant, nom complet, mot de passe.
+    <div class="encadre attendu"><span class="t">Attendu</span> Le rôle de ce premier compte est
+    <b>Administrateur, forcé</b> dans le code — aucun choix n'est proposé, volontairement.
+    À la connexion&nbsp;: votre nom et « Administrateur » dans la barre latérale, et les
+    <b>trois entrées</b> (Tableau de bord · Exemples · Rôles et permissions).</div>
+  </div></div>
+
+  <h2>Et si ça ne démarre pas</h2>
+  <table>
+    <thead><tr><th style="width:34%">Symptôme</th><th style="width:30%">Cause la plus sûre</th><th>Vérification</th></tr></thead>
+    <tbody>
+      <tr><td>L'assistant se rouvre à chaque lancement</td>
+        <td>Réglages non écrits, ou fichier cabossé (le socle repart alors à vide, sans [ERR])</td>
+        <td><span class="qui qui-vous">Exploitant</span> ouvrir <code>%LocalAppData%\{NomApplication}\settings.json</code></td></tr>
+      <tr><td>« Server does not exist / connection refused »</td>
+        <td>Hôte ou port erroné, service PostgreSQL arrêté, pare-feu</td>
+        <td>Bouton Tester de l'assistant&nbsp;; le message cite le SQLSTATE traduit</td></tr>
+      <tr><td>« password authentication failed » à la migration</td>
+        <td>Le terminal ne relit pas les réglages enregistrés avant la commande</td>
+        <td>Relancer l'assistant puis <code>dotnet ef database update</code></td></tr>
+      <tr><td>Base absente et création refusée</td>
+        <td>Nom de base hors whitelist (caractères non autorisés)</td>
+        <td>Renommer en lettres/minuscules/tirets bas, réessayer</td></tr>
+      <tr><td>Compte gelé après trois échecs</td>
+        <td>Anti-force-brute normal&nbsp;: 60 secondes, horloge du cadre</td>
+        <td>Attendre, ou <span class="qui qui-vous">Exploitant</span> en SQL&nbsp;:
+          <code>UPDATE "Comptes" SET "EchecsConsecutifs"=0, "GelJusqua"=NULL;</code></td></tr>
+      <tr><td>Le poste affiche « 0 ligne » alors qu'un autre voit des données</td>
+        <td>Trigger de synchro absent, ou <code>SyncChannel</code> différent entre postes</td>
+        <td>Étape 6 ci-dessus&nbsp;; puis <a href="../05-qualite/conventions-et-pieges.html">pièges mesurés</a></td></tr>
+    </tbody>
+  </table>
+
+  <div class="encadre note">
+    <span class="t">Journal du poste</span>
+    <p>Serilog écrit dans <code>%AppData%\{NomApplication}\Logs\app-{date}.log</code> — un fichier par jour,
+      quinze conservés, niveau Debug. Une erreur technique ne s'affiche jamais brute à l'écran&nbsp;:
+      la trame complète est dans le journal, la phrase française est sur le poste.</p>
+  </div>
+
+  <footer class="pied">02-tutoriels/demarrage-d-un-poste.html — à rejouer sur chaque nouveau poste,
+    et à consigner dans la <a href="../04-manuel-test/fiche-de-recette.html">fiche de recette</a>.</footer>
+
+</div>
+</body>
+</html>

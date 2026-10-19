@@ -1,0 +1,153 @@
+/* Charte de la documentation du socle Framework — une seule feuille pour tout
+   le dossier, pensée pour l'écran ET l'impression A4 (en-tête de page → PDF).
+   Toute nouvelle page la référence en chemin relatif : ../assets/doc.css */
+
+:root {
+  --accent: #0f62fe;
+  --accent-clair: #e3f0ff;
+  --texte: #16191d;
+  --texte-secondaire: #5b6572;
+  --bord: #d6dbe1;
+  --surface: #f7f9fb;
+  --succes: #0e7a3c;
+  --succes-clair: #e6f4ec;
+  --alerte: #8a5a00;
+  --alerte-clair: #fdf3e0;
+  --danger: #b42318;
+  --danger-clair: #fdeceb;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", -apple-system, "Helvetica Neue", Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--texte);
+  background: #fff;
+}
+
+.wrap { max-width: 1020px; margin: 0 auto; padding: 32px 28px 72px; }
+
+/* ── En-tête de page ─────────────────────────────────────────────── */
+.page-head { border-bottom: 3px solid var(--accent); padding-bottom: 14px; margin-bottom: 6px; }
+.page-head .rubrique {
+  font-size: 12px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--accent); font-weight: 700; margin-bottom: 4px;
+}
+.page-head h1 { font-size: 27px; line-height: 1.2; margin: 0 0 10px; font-weight: 650; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 12.5px; color: var(--texte-secondaire); }
+.meta b { color: var(--texte); font-weight: 600; }
+
+.fils { font-size: 12.5px; margin: 16px 0 26px; color: var(--texte-secondaire); }
+.fils a { color: var(--accent); text-decoration: none; }
+.fils a:hover { text-decoration: underline; }
+
+/* ── Titres courants ─────────────────────────────────────────────── */
+h2 {
+  font-size: 19px; margin: 34px 0 12px; padding-left: 11px;
+  border-left: 4px solid var(--accent); font-weight: 650;
+}
+h3 { font-size: 15.5px; margin: 22px 0 8px; font-weight: 650; }
+h2:first-of-type { margin-top: 24px; }
+p { margin: 9px 0; }
+.lede { font-size: 16px; color: var(--texte-secondaire); margin: 14px 0 0; }
+
+/* ── Liens ───────────────────────────────────────────────────────── */
+a { color: var(--accent); }
+code {
+  font-family: "Cascadia Mono", Consolas, "Courier New", monospace;
+  font-size: 13px; background: var(--surface); border: 1px solid var(--bord);
+  border-radius: 3px; padding: 1px 4px;
+}
+pre {
+  background: var(--surface); border: 1px solid var(--bord); border-left: 3px solid var(--accent);
+  border-radius: 4px; padding: 12px 14px; overflow-x: auto; margin: 12px 0;
+}
+pre code { background: none; border: none; padding: 0; font-size: 12.8px; line-height: 1.5; }
+
+/* ── Tableaux ────────────────────────────────────────────────────── */
+table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 13.5px; }
+th, td { border: 1px solid var(--bord); padding: 8px 10px; text-align: left; vertical-align: top; }
+th { background: var(--accent-clair); font-weight: 650; font-size: 12.5px; }
+tbody tr:nth-child(even) td { background: #fbfcfe; }
+
+/* ── Badges d'acteur — « qui fait quoi » est obligatoire partout ──── */
+.qui {
+  display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .05em;
+  text-transform: uppercase; border-radius: 3px; padding: 2px 6px; white-space: nowrap;
+}
+.qui-vous   { background: var(--accent-clair); color: #0a3f9e; border: 1px solid #b9d6fb; }
+.qui-agent  { background: #ece6fb; color: #4d3396; border: 1px solid #d5c8f2; }
+.qui-poste  { background: var(--succes-clair); color: #0b5c2e; border: 1px solid #bde3cc; }
+.qui-outil  { background: #eef1f4; color: #46505b; border: 1px solid #d6dbe1; }
+
+/* ── Statuts ─────────────────────────────────────────────────────── */
+.statut { display: inline-block; font-size: 11.5px; font-weight: 650; border-radius: 10px; padding: 2px 9px; }
+.livre    { background: var(--succes-clair); color: var(--succes); }
+.en-cours { background: var(--alerte-clair); color: var(--alerte); }
+.a-faire  { background: #eef1f4; color: #46505b; }
+.hors     { background: var(--danger-clair); color: var(--danger); }
+
+/* ── Encadrés ────────────────────────────────────────────────────── */
+.encadre { border-radius: 5px; padding: 12px 15px; margin: 14px 0; border: 1px solid; font-size: 14px; }
+.attendu   { background: var(--succes-clair); border-color: #bde3cc; }
+.attendu .t { color: var(--succes); }
+.attention { background: var(--alerte-clair); border-color: #f0dcb4; }
+.attention .t { color: var(--alerte); }
+.danger    { background: var(--danger-clair); border-color: #f3c7c3; }
+.danger .t { color: var(--danger); }
+.note      { background: var(--surface); border-color: var(--bord); }
+.encadre .t { display: block; font-size: 11.5px; font-weight: 700; letter-spacing: .07em;
+              text-transform: uppercase; margin-bottom: 5px; }
+
+/* ── Parcours et fiches ──────────────────────────────────────────── */
+.fiche {
+  border: 1px solid var(--bord); border-radius: 6px; padding: 0 0 14px;
+  margin: 18px 0; break-inside: avoid;
+}
+.fiche > h2 { margin: 0; padding: 11px 16px; border-left: none; border-bottom: 1px solid var(--bord);
+              background: var(--surface); font-size: 16.5px; border-radius: 6px 6px 0 0; }
+.fiche > .corps { padding: 0 16px; }
+.pas { display: flex; gap: 12px; padding: 9px 0; border-bottom: 1px dashed #e6e9ee; break-inside: avoid; }
+.pas:last-child { border-bottom: none; }
+.pas .n {
+  flex: 0 0 26px; height: 26px; border-radius: 13px; background: var(--accent); color: #fff;
+  font-size: 12.5px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+}
+.pas .c { flex: 1; }
+.pas .c p:first-child { margin-top: 2px; }
+
+/* ── Sommaire de catégorie (accueil) ─────────────────────────────── */
+.grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 14px; margin: 18px 0; }
+.carte {
+  display: block; border: 1px solid var(--bord); border-radius: 6px; padding: 14px 16px;
+  text-decoration: none; color: inherit; background: #fff; break-inside: avoid;
+}
+.carte:hover { border-color: var(--accent); box-shadow: 0 1px 5px rgba(15, 98, 254, .13); }
+.carte .dossier { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+.carte h3 { margin: 4px 0 5px; font-size: 15.5px; }
+.carte p { margin: 0; font-size: 13.5px; color: var(--texte-secondaire); }
+
+/* ── Champs à remplir de la fiche de recette ─────────────────────── */
+.champ {
+  display: inline-block; min-width: 120px; border-bottom: 1px solid #9aa4b0;
+  height: 17px; vertical-align: bottom;
+}
+.couleur-case { background: #fffdf5; }
+
+/* ── Pied de page ────────────────────────────────────────────────── */
+.pied { margin-top: 40px; padding-top: 12px; border-top: 1px solid var(--bord);
+        font-size: 12px; color: var(--texte-secondaire); }
+
+/* ── Impression / PDF ────────────────────────────────────────────── */
+@media print {
+  body { font-size: 10.5pt; }
+  .wrap { max-width: none; padding: 0; }
+  .fils, .no-print { display: none !important; }
+  a { color: inherit; text-decoration: none; }
+  h2, .carte, .fiche, pre, table { break-inside: avoid; }
+  @page { size: A4; margin: 16mm 14mm; }
+}

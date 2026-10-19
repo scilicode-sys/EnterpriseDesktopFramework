@@ -4,6 +4,10 @@ Squelette de démarrage **générique** pour applications de gestion multi-poste
 (auto-école, salon de coiffure, stock…). Zéro lien avec un produit existant :
 solution propre, zéro code métier dans les briques.
 
+> **Documentation lisible** : `documentation/index.html` (structure, tutoriels,
+> CDC, manuel de test, qualité). Ce blueprint reste le document de travail de
+> l'agent ; en cas d'écart, **le code a raison, puis le blueprint, puis la page**.
+
 ---
 
 ## QUICK START — un nouveau produit métier en 2 heures (cheat sheet)

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ajouter un écran métier — Framework</title>
+<link rel="stylesheet" href="../assets/doc.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page-head">
+    <div class="rubrique">02 · Tutoriels</div>
+    <h1>Ajouter un écran métier&nbsp;: copier la référence</h1>
+    <p class="lede"><code>ExempleEntity</code> / <code>ExempleViewModel</code> / <code>ExempleView</code>
+      ne sont pas une démo décorative&nbsp;: c'est le patron complet, droits et temps réel compris.
+      On le copie, on renomme, on remplace les colonnes.</p>
+    <div class="meta">
+      <span>Pièce source&nbsp;: <b>3 fichiers + 1 configuration</b></span>
+      <span>Durée&nbsp;: <b>30 min</b> pour une première table</span>
+      <span>À la fin&nbsp;: <b>0 erreur Release, tests verts, écran jouable</b></span>
+    </div>
+  </header>
+
+  <nav class="fils"><a href="../index.html">Accueil</a> › 02 · Tutoriels › <b>Ajouter un écran métier</b></nav>
+
+  <h2>Le trajet en sept étapes</h2>
+
+  <div class="pas"><div class="n">1</div><div class="c">
+    <span class="qui qui-agent">Agent</span> <b>L'entité.</b> <code>Framework.Data/Entities/EleveEntity.cs</code>&nbsp;:
+    <pre><code>public class EleveEntity : EntityBase
+{
+    public string Nom { get; set; } = string.Empty;
+    public string Categorie { get; set; } = string.Empty;
+    public decimal Montant { get; set; }
+    public string? Note { get; set; }
+}</code></pre>
+    <code>EntityBase</code> apporte <code>Id</code>, <code>CreatedAt</code>, <code>UpdatedAt</code>,
+    <code>IsDeleted</code>, <code>DeletedAt</code>. Ne jamais les redéclarer.
+  </div></div>
+
+  <div class="pas"><div class="n">2</div><div class="c">
+    <span class="qui qui-agent">Agent</span> <b>La configuration et le <code>DbSet</code>.</b>
+    <pre><code>builder.ToTable("Eleves");
+builder.Property(e =&gt; e.Nom).HasMaxLength(128).IsRequired();
+builder.Property(e =&gt; e.Montant).HasPrecision(12, 2);
+builder.HasIndex(e =&gt; new { e.Categorie, e.Nom }).HasName("IX_Eleves_Categorie_Nom");
+
+// FrameworkDbContext (ou le contexte du produit)
+public DbSet&lt;EleveEntity&gt; Eleves =&gt; Set&lt;EleveEntity&gt;();</code></pre>
+    Les longueurs et la précision du montant se déclarent ici, pas dans le formulaire&nbsp;:
+    c'est la base qui décide, l'écran ne fait que l'annoncer avant l'échec.
+  </div></div>
+
+  <div class="pas"><div class="n">3</div><div class="c">
+    <span class="qui qui-agent">Agent</span> <b>La migration, avec le trigger.</b>
+    <pre><code>dotnet ef migrations add AjoutEleves --project Framework.Data --startup-project Framework.WPF</code></pre>
+    Puis, dans le <code>Up</code>&nbsp;:
+    <pre><code>migrationBuilder.Sql(SyncNotifySql.Script("framework_sync", new[] { "Eleves" }));</code></pre>
+    et dans le <code>Down</code>&nbsp;: <code>DROP TRIGGER IF EXISTS "TX_sync_Eleves" ON "Eleves";</code>
+  </div></div>
+
+  <div class="pas"><div class="n">4</div><div class="c">
+    <span class="qui qui-agent">Agent</span> <b>Les permissions.</b> Dans la classe de clés du produit,
+    <code>eleves.consulter</code> / <code>modifier</code> / <code>supprimer</code> / <code>exporter</code>,
+    puis dans <code>MatriceParDefaut</code> (ou la matrice du produit) qui les tient.
+  </div></div>
+
+  <div class="pas"><div class="n">5</div><div class="c">
+    <span class="qui qui-agent">Agent</span> <b>Le ViewModel.</b> Copier <code>ExempleViewModel.cs</code> en entier,
+    renommer, et <b>garder les quatre mécaniques</b>&nbsp;:
+    <table>
+      <thead><tr><th style="width:34%">Mécanique</th><th>Pourquoi elle est là</th></tr></thead>
+      <tbody>
+        <tr><td>Portée DI par opération<br><code>_portes.CreateAsyncScope()</code></td>
+          <td>Un écran ouvert huit heures ne retient pas une connexion du pool. Ne jamais mettre
+            <code>IUnitOfWork</code> en champ.</td></tr>
+        <tr><td><code>_autorisation.Exiger(...)</code> dans le <code>try</code> de la commande</td>
+          <td>La seule vraie garde. Le bouton grisé n'est qu'un confort&nbsp;: Entrée, raccourci ou
+            retour arrière contournent la vue.</td></tr>
+        <tr><td>Garde <code>_rechargementEnCours</code></td>
+          <td>Le bouton « Actualiser » et la notification d'un autre poste peuvent se croiser&nbsp;;
+            sans lui la liste finit dans un état qui ne correspond à aucune des deux requêtes.</td></tr>
+        <tr><td>Méthode publique <code>ReactualiserSiNotreTableAsync(dto)</code></td>
+          <td>Le demi de <code>Receive</code> découplé du Dispatcher WPF&nbsp;: c'est ce qui rend le
+            temps réel testable sans fenêtre.</td></tr>
+      </tbody>
+    </table>
+  </div></div>
+
+  <div class="pas"><div class="n">6</div><div class="c">
+    <span class="qui qui-agent">Agent</span> <b>La vue et les trois branchements.</b> Copier
+    <code>ExempleView.xaml</code>, changer les colonnes du <code>DataGrid</code> et le formulaire, puis&nbsp;:
+    <code>DataTemplate</code> dans <code>App.xaml</code>, <code>AddTransient</code> dans <code>App.xaml.cs</code>,
+    <code>NavigationItem("Elèves", glyphe, typeof(EleveViewModel), ElevesDroits.Consulter)</code>
+    dans <code>ShellViewModel._tousLesItems</code>. Les deux boutons d'écriture se lient aux propriétés
+    <code>Bouton…Actif</code> (droit <b>et</b> état), jamais à <code>EstOccupe</code> seul.
+  </div></div>
+
+  <div class="pas"><div class="n">7</div><div class="c">
+    <span class="qui qui-agent">Agent</span> <b>Les tests.</b> Copier <code>ExempleViewModelTests.cs</code>&nbsp;:
+    validations, création/modification, suppression logique vérifiée en base
+    (<code>IgnoreQueryFilters()</code>), notification d'un autre poste, refus d'écriture par rôle non autorisé.
+    <code>FakeSession</code> + <code>new AutorisationService(session, matrice)</code> suffisent —
+    aucune base réelle, aucune fenêtre.
+  </div></div>
+
+  <h2>Cinq pièges qui reviennent</h2>
+  <table>
+    <thead><tr><th style="width:38%">Geste</th><th>Ce qui casse</th></tr></thead>
+    <tbody>
+      <tr><td>Déclarer <code>AddTransient&lt;IAuthService&gt;</code> pour « propre »</td>
+        <td>Le shell singleton ne voit jamais <code>CurrentUser</code>&nbsp;: chip utilisateur vide et
+          <b>tous les droits refusés</b>, même pour un Administrateur.</td></tr>
+      <tr><td>Filtrer la liste à chaque frappe dans le champ</td>
+        <td>Deux requêtes concurrentes et une liste qui ne correspond à rien. Le filtre s'applique
+          sur le bouton « Actualiser ».</td></tr>
+      <tr><td>Oublier <code>base.OnModelCreating</code> dans le contexte produit</td>
+        <td>Le filtre de suppression logique disparaît&nbsp;: les lignes supprimées ressurgissent.</td></tr>
+      <tr><td>Une clé de thème consommée sans exister dans <code>Dark.xaml</code></td>
+        <td>Écran illisible dès le basculement sombre — et le XAML compile très bien.</td></tr>
+      <tr><td><code>migrationBuilder.Sql(SyncNotifySql…)</code> oublié</td>
+        <td>Aucune erreur, aucun journal&nbsp;: la table n'est tout simplement jamais partagée entre postes.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Contrôle final</h2>
+  <table>
+    <thead><tr><th style="width:46%">Question</th><th style="width:18%">Preuve</th><th>Qui vérifie</th></tr></thead>
+    <tbody>
+      <tr><td>Release compile à 0 erreur, 0 avertissement</td><td>sortie <code>dotnet build</code></td>
+        <td><span class="qui qui-agent">Agent</span></td></tr>
+      <tr><td>La suite passe</td><td>sortie <code>dotnet test</code></td><td><span class="qui qui-agent">Agent</span></td></tr>
+      <tr><td>Trigger présent après migration</td><td><code>pg_trigger</code></td><td><span class="qui qui-vous">Exploitant</span></td></tr>
+      <tr><td>L'écran s'affiche, les boutons se grisent, un second poste se recharge</td>
+        <td>jeu manuel <a href="../04-manuel-test/plan-de-qualification.html">T2 · T3 · T4</a></td>
+        <td><span class="qui qui-vous">Exploitant</span></td></tr>
+    </tbody>
+  </table>
+
+  <footer class="pied">02-tutoriels/ajouter-ecran-metier.html — la trilogie de référence
+    (<code>Exemple*</code>) se supprime dès la première vraie table du produit, avec sa ligne dans
+    la migration <code>Initial</code> et sa table <code>Exemples</code>.</footer>
+
+</div>
+</body>
+</html>

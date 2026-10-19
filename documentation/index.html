@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documentation — socle Framework .NET 8 / WPF</title>
+<link rel="stylesheet" href="assets/doc.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page-head">
+    <div class="rubrique">Documentation du projet</div>
+    <h1>Socle desktop d'entreprise — Framework .NET 8 / WPF</h1>
+    <p class="lede">Squelette de démarrage générique pour applications de gestion multi-postes.
+      Cette documentation se lit à l'écran et s'imprime en PDF au format A4
+      (<b>Ctrl&nbsp;+&nbsp;P</b> → «&nbsp;Enregistrer au format PDF&nbsp;»).</p>
+    <div class="meta">
+      <span>Version&nbsp;: <b>1.0</b></span>
+      <span>État du socle&nbsp;: <b>commit fefb865</b> — 19/10/2026</span>
+      <span>Build Release&nbsp;: <b>0 erreur, 0 avertissement</b></span>
+      <span>Tests automatiques&nbsp;: <b>162 au vert</b></span>
+      <span>Dépôt&nbsp;: <b>EnterpriseDesktopFramework</b> (branche <code>main</code>)</span>
+    </div>
+  </header>
+
+  <nav class="fils">
+    <b>Accueil</b> · Structure · Tutoriels · Plan &amp; CDC · Manuel de test · Qualité
+  </nav>
+
+  <h2>Les cinq catégories</h2>
+  <div class="grille">
+    <a class="carte" href="01-structure/architecture.html">
+      <span class="dossier">01 · structure</span>
+      <h3>Architecture du projet</h3>
+      <p>Les cinq projets, le sens des dépendances, la table des briques et le cycle
+        d'une écriture de données. À lire en premier.</p>
+    </a>
+    <a class="carte" href="02-tutoriels/demarrage-d-un-poste.html">
+      <span class="dossier">02 · tutoriels</span>
+      <h3>Démarrer un poste neuf</h3>
+      <p>Assistant réseau, migration de la base, premier compte. Cinq minutes, chaque
+        étape nomme celui qui l'exécute.</p>
+    </a>
+    <a class="carte" href="02-tutoriels/nouveau-produit.html">
+      <span class="dossier">02 · tutoriels</span>
+      <h3>Nouveau produit en deux heures</h3>
+      <p>Copier, renommer, brancher le domaine, la synchro, les droits et la licence.</p>
+    </a>
+    <a class="carte" href="02-tutoriels/ajouter-ecran-metier.html">
+      <span class="dossier">02 · tutoriels</span>
+      <h3>Ajouter un écran métier</h3>
+      <p>La mécanique d'<code>ExempleViewModel</code> copiée pour une vraie table :
+        entité, écran, navigation, droits.</p>
+    </a>
+    <a class="carte" href="03-plan/cahier-des-charges.html">
+      <span class="dossier">03 · plan</span>
+      <h3>Cahier des charges</h3>
+      <p>Périmètre, exigences permanentes, critères d'acceptation de chaque brique,
+        et ce que le cadre laisse volontairement au produit.</p>
+    </a>
+    <a class="carte" href="03-plan/feuille-de-route.html">
+      <span class="dossier">03 · plan</span>
+      <h3>Feuille de route</h3>
+      <p>Tours livrés, briques restantes, ordre conseillé et bloqueurs réels.</p>
+    </a>
+    <a class="carte" href="04-manuel-test/plan-de-qualification.html">
+      <span class="dossier">04 · manuel de test</span>
+      <h3>Plan de qualification (T0 → T6)</h3>
+      <p>Les sept parcours que seul un exploitant peut jouer : rendu, droits à
+        l'écran, deux postes en synchro, pannes réelles.</p>
+    </a>
+    <a class="carte" href="04-manuel-test/fiche-de-recette.html">
+      <span class="dossier">04 · manuel de test</span>
+      <h3>Fiche de recette à remplir</h3>
+      <p>Registre des essais : verdict, date, rôle testé, observation. À imprimer
+        ou à copier dans le suivi du produit.</p>
+    </a>
+    <a class="carte" href="05-qualite/conventions-et-pieges.html">
+      <span class="dossier">05 · qualité</span>
+      <h3>Conventions et pièges mesurés</h3>
+      <p>Les règles permanentes du socle et les seize pièges déjà désamorcés,
+        avec la faute exacte et la correction.</p>
+    </a>
+  </div>
+
+  <h2>Convention de mise à jour — contractuelle</h2>
+  <p>La documentation n'est pas une photo : elle est tenue au même titre que le code.
+    La règle est simple et tient en trois lignes.</p>
+  <table>
+    <thead><tr><th style="width:32%">Quand</th><th style="width:20%">Qui agit</th><th>Quoi</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Chaque brique livrée (commit <code>feat(...)</code>)</td>
+        <td><span class="qui qui-agent">Agent</span></td>
+        <td>Mettre à jour <code>01-structure/architecture.html</code> (table des briques),
+          <code>03-plan/feuille-de-route.html</code> (statut), l'en-tête de <code>index.html</code>
+          (commit, nombre de tests) et le <code>Framework_Blueprint.md</code>.</td>
+      </tr>
+      <tr>
+        <td>Chaque page jouée en manuel</td>
+        <td><span class="qui qui-vous">Exploitant</span></td>
+        <td>Renseigner la <a href="04-manuel-test/fiche-de-recette.html">fiche de recette</a> :
+          verdict, date, rôle testé. Une anomalie se signale par «&nbsp;numéro du parcours,
+          écran, phrase exacte affichée&nbsp;».</td>
+      </tr>
+      <tr>
+        <td>Avant une mise en production produit</td>
+        <td><span class="qui qui-agent">Agent</span></td>
+        <td>Relire chaque page contre le code, corriger les écarts, puis dater l'en-tête
+          de la version livrée.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="encadre attention">
+    <span class="t">Source de vérité</span>
+    <p><code>Framework_Blueprint.md</code>, à la racine, reste le document de travail de
+      l'agent&nbsp;: quand une page HTML et le blueprint divergent, <b>le code a raison,
+      puis le blueprint, puis la page</b>. La page <a href="05-qualite/conventions-et-pieges.html">conventions
+      et pièges</a> en est la traduction lisible et doit être régénérée quand le blueprint change.</p>
+  </div>
+
+  <h2>Comment lire ce dossier</h2>
+  <ul>
+    <li><b>Vous découvrez le socle</b> → <a href="01-structure/architecture.html">architecture</a>,
+      puis <a href="04-manuel-test/plan-de-qualification.html">plan de qualification</a>.</li>
+    <li><b>Vous démarrez un produit</b> → <a href="02-tutoriels/nouveau-produit.html">nouveau produit
+      en deux heures</a>, puis <a href="03-plan/cahier-des-charges.html">cahier des charges</a> pour
+      décider ce qui est à votre charge.</li>
+    <li><b>Un poste se comporte mal</b> → <a href="05-qualite/conventions-et-pieges.html">pièges mesurés</a>
+      (la faute y est presque toujours décrite), puis le parcours T correspondant.</li>
+  </ul>
+
+  <h2>Règle de lecture commune à toutes les pages</h2>
+  <p>Chaque étape d'une recette porte un badge qui dit <b>qui</b> l'exécute. Un texte
+    sans acteur est une ambiguïté, pas une indication.</p>
+  <table>
+    <thead><tr><th style="width:22%">Badge</th><th>Signification</th></tr></thead>
+    <tbody>
+      <tr><td><span class="qui qui-vous">Exploitant</span></td>
+        <td>Vous, au clavier, dans l'interface ou dans un terminal.</td></tr>
+      <tr><td><span class="qui qui-agent">Agent</span></td>
+        <td>Moi, dans le dépôt&nbsp;: code, tests, build, commit, et documentation.</td></tr>
+      <tr><td><span class="qui qui-poste">Poste</span></td>
+        <td>Le programme lui-même, sans intervention (démarrage automatique, écoute LISTEN/NOTIFY).</td></tr>
+      <tr><td><span class="qui qui-outil">Outil</span></td>
+        <td>Une ligne de commande externe&nbsp;: <code>dotnet</code>, <code>dotnet ef</code>, <code>psql</code>.</td></tr>
+    </tbody>
+  </table>
+
+  <footer class="pied">
+    documentation/index.html — version 1.0, état du socle fefb865 (19/10/2026).
+    Dossier <code>documentation/</code> commité avec la solution ; il ne contient ni réglages
+    locaux, ni artefacts de build.
+  </footer>
+
+</div>
+</body>
+</html>

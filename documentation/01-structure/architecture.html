@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture du projet — Framework</title>
+<link rel="stylesheet" href="../assets/doc.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page-head">
+    <div class="rubrique">01 · Structure</div>
+    <h1>Architecture du projet</h1>
+    <p class="lede">Cinq projets, un sens de dépendance unique, aucune règle métier dans
+      le socle. Cette page décrit ce qui existe — pas ce que votre produit va en faire.</p>
+    <div class="meta">
+      <span>État du socle&nbsp;: <b>commit fefb865</b> — 19/10/2026</span>
+      <span>Solution&nbsp;: <code>Framework.sln</code></span>
+      <span>Exécutable produit&nbsp;: <code>FrameworkDemo.exe</code></span>
+    </div>
+  </header>
+
+  <nav class="fils"><a href="../index.html">Accueil</a> › <b>01 · Structure › Architecture</b></nav>
+
+  <h2>Les cinq projets</h2>
+  <table>
+    <thead><tr><th style="width:20%">Projet</th><th style="width:16%">Cible</th><th style="width:26%">Dépend de</th><th>Rôle</th></tr></thead>
+    <tbody>
+      <tr><td><code>Framework.Core</code></td><td>net8.0</td><td>rien <b>(zéro dépendance)</b></td>
+        <td>Contrats et modèles purs&nbsp;: conventions d'entité, Unit of Work, synchro,
+          navigation, thème, session, temps, réglages, alertes, licence, RBAC.</td></tr>
+      <tr><td><code>Framework.Data</code></td><td>net8.0</td><td>Core</td>
+        <td>EF Core 9 + Npgsql&nbsp;: contexte, dépôts, resolver de connexion, écouteur
+          LISTEN/NOTIFY, migrations fournies. <b>Aucune référence UI.</b></td></tr>
+      <tr><td><code>Framework.Common</code></td><td>net8.0-windows</td><td>Core</td>
+        <td>Services Windows&nbsp;: réglages JSON, chiffrement DPAPI, licence/HWID,
+          Velopack, Sentry, PDF QuestPDF, export CSV.</td></tr>
+      <tr><td><code>Framework.WPF</code></td><td>net8.0-windows</td><td>Core, Data, Common</td>
+        <td>Composition root et écrans&nbsp;: hôte DI, shell, navigation par ViewModel,
+          thème à chaud, assistant réseau, écran CRUD de référence, écran des droits.</td></tr>
+      <tr><td><code>Framework.Tests</code></td><td>net8.0-windows</td><td>les quatre</td>
+        <td>162 tests xUnit, sans base de données réelle (EF InMemory + horloge pilotée).</td></tr>
+    </tbody>
+  </table>
+
+  <div class="encadre note">
+    <span class="t">Règle de dépendance</span>
+    <p><code>WPF → Common → Core</code> et <code>WPF → Data → Core</code>. <b>Data et Common ne se
+      référencent jamais entre eux</b> — la jonction se fait au composition root
+      (<code>App.xaml.cs</code>). Un projet qui remonte vers l'UI est une faute d'architecture,
+      pas une nuance.</p>
+  </div>
+
+  <h3>Paquets épinglés (versions du dépôt hôte)</h3>
+  <table>
+    <thead><tr><th style="width:42%">Paquet</th><th>Version</th></tr></thead>
+    <tbody>
+      <tr><td>Microsoft.EntityFrameworkCore (+ Relational, Design, InMemory)</td><td>9.0.10</td></tr>
+      <tr><td>Npgsql.EntityFrameworkCore.PostgreSQL</td><td>9.0.4</td></tr>
+      <tr><td>Microsoft.Extensions.Hosting / DependencyInjection.Abstractions / Logging.Abstractions</td><td>9.0.10</td></tr>
+      <tr><td>CommunityToolkit.Mvvm</td><td>8.4.0</td></tr>
+      <tr><td>QuestPDF</td><td>2026.2.4</td></tr>
+      <tr><td>Sentry · Velopack · System.Security.Cryptography.ProtectedData</td><td>6.12.0 · 1.2.161 · 9.0.8</td></tr>
+      <tr><td>xunit · xunit.runner.visualstudio · Microsoft.NET.Test.Sdk</td><td>2.6.2 · 2.5.3 · 17.13.0</td></tr>
+      <tr><td>Serilog.Extensions.Hosting · Serilog.Sinks.File</td><td>9.0.0 · 7.0.0</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Table des briques</h2>
+  <table>
+    <thead><tr><th style="width:12%">Projet</th><th style="width:28%">Pièce</th><th>Rôle — et ce qu'on en attend</th></tr></thead>
+    <tbody>
+      <tr><td>Core</td><td><code>IEntity</code>, <code>IAuditableEntity</code>, <code>ISoftDeletableEntity</code>, <code>EntityBase</code></td>
+        <td>Conventions de domaine reconnues par le contexte&nbsp;: <code>Id</code> seule clé,
+          audit écrit au <code>SaveChanges</code>, DELETE converti en <code>IsDeleted</code>.</td></tr>
+      <tr><td>Core</td><td><code>IGenericRepository&lt;T&gt;</code>, <code>IUnitOfWork</code></td>
+        <td>Frontière d'écriture unique&nbsp;; aucun écran ne parle directement au <code>DbContext</code>.</td></tr>
+      <tr><td>Core</td><td><code>ISyncNotificationService</code>, <code>SyncNotificationDto</code></td>
+        <td>Contrat temps réel inter-postes, indépendant de PostgreSQL.</td></tr>
+      <tr><td>Core</td><td><code>Droits</code>, <code>RoleDefini</code>, <code>MatriceRoles</code>, <code>MatriceParDefaut</code>, <code>AutorisationService</code></td>
+        <td><b>RBAC</b>&nbsp;: permissions <code>module.verbe</code>, sauvageonne <code>*</code>, héritage
+          aplati, rôle inconnu = zéro droit. <code>Peut()</code> pour la vue, <code>Exiger()</code> pour l'écriture.</td></tr>
+      <tr><td>Core</td><td><code>INavigationService</code>, <code>IThemeService</code>, <code>IAuthService</code>,
+        <code>IHorloge</code>, <code>ISettingsService</code>, <code>IAlertService</code>, <code>ILicenseService</code></td>
+        <td>Transverses sans référence UI ni base. Le temps ne se lit jamais dans <code>DateTime.Now</code>.</td></tr>
+      <tr><td>Core</td><td><code>PasswordHasher</code></td>
+        <td>PBKDF2-SHA256, 150 000 itérations, comparaison en temps constant.</td></tr>
+      <tr><td>Data</td><td><code>FrameworkDbContext</code></td>
+        <td>Filtre global de suppression logique, configurations par assembly, garde du nom de base.</td></tr>
+      <tr><td>Data</td><td><code>UnitOfWork</code>, <code>GenericRepository&lt;T&gt;</code></td>
+        <td>Contexte privé par unité de travail&nbsp;; <code>ExecuteInTransactionAsync</code> sous
+          <code>CreateExecutionStrategy</code> (obligatoire avec <code>EnableRetryOnFailure</code>).</td></tr>
+      <tr><td>Data</td><td><code>PostgresConnectionResolver</code></td>
+        <td><b>Source unique</b> de la chaîne de connexion, relecture à chaud après l'assistant,
+          diagnostics SQLSTATE en français, <code>GarantirBaseAsync</code> avec whitelist du nom de base.</td></tr>
+      <tr><td>Data</td><td><code>PostgresSyncListener</code>, <code>SyncNotifySql</code></td>
+        <td>LISTEN/NOTIFY hors du pool, battement de cœur 30 s, backoff 1 → 30 s, anti-écho par
+          <code>Application Name</code> = <code>framework-{MachineName}-{ProcessId}</code>.</td></tr>
+      <tr><td>Data</td><td><code>Design/DesignTimeDbContextFactory</code> + <code>Migrations/Initial</code></td>
+        <td>Migration fournie&nbsp;: tables <code>Comptes</code> et <code>Exemples</code> + trigger de synchro.
+          L'outil EF lit les réglages de l'assistant et refuse sans configuration.</td></tr>
+      <tr><td>Data</td><td><code>AuthService</code></td>
+        <td>Session + anti-force-brute (3 échecs → gel 60 s via <code>IHorloge</code>), amorce du premier compte.
+          <b>Résolu en singleton</b> — c'est l'état de session du poste.</td></tr>
+      <tr><td>Common</td><td><code>JsonSettingsService</code></td>
+        <td>%LocalAppData%\{AppName}\settings.json, écriture atomique, fichier cabossé = redémarrage à vide.</td></tr>
+      <tr><td>Common</td><td><code>EncryptionService</code>, <code>HwidProvider</code></td>
+        <td>AES-256-GCM par machine sous DPAPI (blocs + AAD), empreinte machine stable.</td></tr>
+      <tr><td>Common</td><td><code>OfflineLicenseEngine</code>, <code>LicenseService</code>, <code>OnlineLicenseValidator</code></td>
+        <td>Challenge/response HMAC-SHA256 en quatre paquets base32&nbsp;; statut = signature + HWID + date&nbsp;;
+          la panne réseau ne punit jamais.</td></tr>
+      <tr><td>Common</td><td><code>PdfReportService</code>, <code>RapportModele</code>, <code>CsvExportService</code></td>
+        <td>Rapports A4 sans type métier&nbsp;; export RFC 4180, point-virgule + BOM UTF-8 (Excel français).</td></tr>
+      <tr><td>Common</td><td><code>VelopackUpdateService</code>, <code>TelemetrySentry</code>, <code>GrowlAlertService</code></td>
+        <td>Update null hors installation, application uniquement en <code>OnExit</code>&nbsp;; télémétrie
+          optionnelle par DSN&nbsp;; notifications empilées côté Dispatcher.</td></tr>
+      <tr><td>WPF</td><td><code>App.xaml.cs</code></td>
+        <td>Composition root&nbsp;: Velopack en toute première ligne, assistant réseau ouvert
+          automatiquement si le poste n'est pas configuré, pont listener → <code>WeakReferenceMessenger</code>.</td></tr>
+      <tr><td>WPF</td><td><code>ShellViewModel</code> + <code>MainWindow</code></td>
+        <td>Barre latérale rétractable <b>filtrée par les droits de la session</b>, thème, chip utilisateur,
+          état de synchro, retour.</td></tr>
+      <tr><td>WPF</td><td><code>NavigationService</code></td>
+        <td>La pile garde des <b>types</b>&nbsp;; l'instance est résolue en DI à chaque visite — pas de ViewModel caché en singleton.</td></tr>
+      <tr><td>WPF</td><td><code>ConnectionConfigWindow</code></td>
+        <td>Assistant réseau autonome&nbsp;: test, création de base, enregistrement.</td></tr>
+      <tr><td>WPF</td><td><code>ExempleViewModel</code> + <code>ExempleView</code> + <code>ExempleEntity</code></td>
+        <td>Écran CRUD <b>de référence</b>, à copier puis à supprimer avec la table <code>Exemples</code>.</td></tr>
+      <tr><td>WPF</td><td><code>DroitsViewModel</code> + <code>DroitsView</code></td>
+        <td>La matrice déroulée, la session marquée, les rôles sans issue signalés.</td></tr>
+      <tr><td>CI</td><td><code>.github/workflows/framework-ci.yml</code></td>
+        <td>windows-latest&nbsp;: Release build + 162 tests sur tout push touchant le framework.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Cycle d'une écriture, puis d'une notification</h2>
+  <p>Décrire le trajet complet évite deux erreurs classiques&nbsp;: garder un contexte vivant
+    dans un écran, et croire qu'un bouton grisé protège quelque chose.</p>
+
+  <div class="fiche">
+    <h2>1. Le poste écrit</h2>
+    <div class="corps">
+      <div class="pas"><div class="n">1</div><div class="c">
+        <span class="qui qui-poste">Poste</span> <code>ExempleViewModel.EnregistrerAsync()</code> valide les champs,
+        puis <code>_autorisation.Exiger(Droits.ExemplesModifier)</code> — la vraie garde.</div></div>
+      <div class="pas"><div class="n">2</div><div class="c">
+        <span class="qui qui-poste">Poste</span> <code>_portes.CreateAsyncScope()</code>&nbsp;: une portée DI
+        <b>par opération</b>, libérée en <code>finally</code>. L'écran ne retient aucune connexion du pool.</div></div>
+      <div class="pas"><div class="n">3</div><div class="c">
+        <span class="qui qui-poste">Poste</span> <code>IUnitOfWork.Repository&lt;T&gt;()</code> →
+        <code>SaveChangesAsync()</code>&nbsp;: le contexte écrit l'audit (<code>CreatedAt</code>/<code>UpdatedAt</code>)
+        et convertit un <code>Remove</code> en <code>IsDeleted = true</code>.</div></div>
+      <div class="pas"><div class="n">4</div><div class="c">
+        <span class="qui qui-outil">Base</span> Le trigger <code>TX_sync_{table}</code> appelle
+        <code>framework_notify_sync()</code> et émet <code>pg_notify('framework_sync', …)</code>
+        avec la table, l'opération, l'horodatage et l'<code>Application Name</code> de l'émetteur.</div></div>
+    </div>
+  </div>
+
+  <div class="fiche">
+    <h2>2. Les autres postes se rechargent</h2>
+    <div class="corps">
+      <div class="pas"><div class="n">1</div><div class="c">
+        <span class="qui qui-poste">Poste</span> <code>PostgresSyncListener</code> (connexion dédiée, hors pool) reçoit
+        la notification et la compare à son propre <code>ClientSyncId</code>&nbsp;: <b>anti-écho</b>.</div></div>
+      <div class="pas"><div class="n">2</div><div class="c">
+        <span class="qui qui-poste">Poste</span> L'événement <code>ISyncNotificationService</code> est publié
+        par <code>App.xaml.cs</code> dans le <code>WeakReferenceMessenger</code> sous forme de
+        <code>ExternalEntityChangedMessage</code>.</div></div>
+      <div class="pas"><div class="n">3</div><div class="c">
+        <span class="qui qui-poste">Poste</span> Chaque écran <code>IRecipient&lt;…&gt;</code> filtre sur <b>sa</b>
+        table, ignore la notification s'il est en cours d'écriture, puis se recharge sur le Dispatcher.</div></div>
+      <div class="pas"><div class="n">4</div><div class="c">
+        <span class="qui qui-poste">Poste</span> Le shell incrémente son compteur et affiche
+        «&nbsp;Dernière notification&nbsp;: <em>table</em> (<em>opération</em>)&nbsp;».</div></div>
+    </div>
+  </div>
+
+  <div class="encadre attention">
+    <span class="t">Le maillon que l'on oublie</span>
+    <p>Une nouvelle table métier n'est <b>pas</b> partagée tant que sa migration n'a pas ajouté
+      <code>migrationBuilder.Sql(SyncNotifySql.Script("framework_sync", new[] { "MaTable" }));</code>.
+      Sans cette ligne, rien ne se casse&nbsp;: les postes se croient simplement seuls pour toujours.</p>
+  </div>
+
+  <h2>Où le produit se branche</h2>
+  <table>
+    <thead><tr><th style="width:32%">Point d'extension</th><th>File dans le code</th></tr></thead>
+    <tbody>
+      <tr><td>Contexte et entités</td><td><code>AddFrameworkData&lt;MonProduitDbContext&gt;()</code> ; entités héritées
+        d'<code>EntityBase</code> ; <code>ApplyConfigurationsFromAssembly</code>.</td></tr>
+      <tr><td>Matrice des rôles</td><td><code>services.AddSingleton&lt;IMatriceRoles&gt;(_ =&gt; maMatrice)</code> — remplace
+        <code>MatriceParDefaut.Creer()</code> dans <code>App.xaml.cs</code>.</td></tr>
+      <tr><td>Écrans</td><td><code>ShellViewModel._tousLesItems</code> (avec la permission requise), <code>DataTemplate</code>
+        dans <code>App.xaml</code>, <code>AddTransient</code> du ViewModel.</td></tr>
+      <tr><td>Nom et secret de licence</td><td><code>NomApplication</code> (dossiers %LocalAppData% / %ProgramData%) et
+        <code>CleLicenceDemo</code> → la clé HMAC du produit, jamais celle du cadre.</td></tr>
+      <tr><td>Canal de synchro</td><td><code>FrameworkDataOptions.SyncChannel</code> — le même pour tous les postes du
+        produit, différent entre deux produits sur un même serveur.</td></tr>
+    </tbody>
+  </table>
+
+  <footer class="pied">
+    01-structure/architecture.html — relire cette page à chaque brique livrée&nbsp;; la table des briques
+    et le table des paquets doivent rester synchrones avec les <code>.csproj</code> réels.
+  </footer>
+
+</div>
+</body>
+</html>

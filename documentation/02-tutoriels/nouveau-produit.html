@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nouveau produit en deux heures — Framework</title>
+<link rel="stylesheet" href="../assets/doc.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page-head">
+    <div class="rubrique">02 · Tutoriels</div>
+    <h1>Nouveau produit métier en deux heures</h1>
+    <p class="lede">Copier le socle, le renommer à son nom, brancher son domaine et ses droits.
+      Le cadre fournit la mécanique&nbsp;; le produit écrit sa politique.</p>
+    <div class="meta">
+      <span>Chrono&nbsp;: <b>20 min · 40 min · 30 min · 30 min</b></span>
+      <span>Version du socle&nbsp;: <b>fefb865</b></span>
+      <span>Objectif&nbsp;: <b>0 erreur en Release</b> à chaque étape</span>
+    </div>
+  </header>
+
+  <nav class="fils"><a href="../index.html">Accueil</a> › 02 · Tutoriels › <b>Nouveau produit en deux heures</b></nav>
+
+  <table>
+    <thead><tr><th style="width:16%">Quand</th><th style="width:16%">Qui agit</th><th>Étape</th></tr></thead>
+    <tbody>
+      <tr><td>H + 0</td><td><span class="qui qui-vous">Exploitant</span> + <span class="qui qui-agent">Agent</span></td>
+        <td><b>Copier et renommer.</b> Les quatre projets <code>Framework.*</code> et <code>Framework.sln</code>
+          dans le nouveau dépôt&nbsp;; dans <code>Framework.WPF.csproj</code>, <code>AssemblyName</code> et
+          <code>Product</code> (ex.&nbsp;<code>AutoEcole</code>)&nbsp;; dans <code>App.xaml.cs</code>,
+          <code>NomApplication</code> et <code>CleLicenceDemo</code> → la clé HMAC propre au produit.
+          <code>dotnet build -c Release</code> doit sortir à 0 erreur.</td></tr>
+      <tr><td>H + 0,35</td><td><span class="qui qui-agent">Agent</span></td>
+        <td><b>Le domaine.</b> Entités héritées d'<code>EntityBase</code>, contexte dérivé de
+          <code>FrameworkDbContext</code>, configurations par assembly,
+          <code>services.AddFrameworkData&lt;MonProduitDbContext&gt;()</code>.</td></tr>
+      <tr><td>H + 1,0</td><td><span class="qui qui-vous">Exploitant</span></td>
+        <td><b>Base et temps réel.</b> Assistant réseau au premier lancement, puis
+          <code>dotnet ef database update --project Framework.Data</code>. Nouvelle table&nbsp;→
+          migration + <code>SyncNotifySql</code> dans la migration.</td></tr>
+      <tr><td>H + 1,5</td><td><span class="qui qui-agent">Agent</span></td>
+        <td><b>Premier écran.</b> Copier la trilogie de référence (voir
+          <a href="ajouter-ecran-metier.html">ajouter un écran métier</a>), renommer, brancher les trois points
+          d'extension.</td></tr>
+      <tr><td>H + 1,75</td><td><span class="qui qui-agent">Agent</span></td>
+        <td><b>Droits.</b> <code>new MatriceRoles(...)</code> du produit à la composition root, clés
+          <code>module.verbe</code>, <code>Exiger()</code> dans chaque commande d'écriture.</td></tr>
+      <tr><td>H + 2</td><td><span class="qui qui-vous">Exploitant</span></td>
+        <td><b>Licence du poste.</b> L'éditeur du produit émet <code>OfflineLicenseEngine.Emettre(...)</code>&nbsp;;
+          le poste active. Puis jeu du <a href="../04-manuel-test/plan-de-qualification.html">plan de qualification</a>.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Le contexte du produit</h2>
+  <pre><code>public class AutoEcoleDbContext : FrameworkDbContext
+{
+    public AutoEcoleDbContext(DbContextOptions&lt;AutoEcoleDbContext&gt; options) : base(options) { }
+
+    public DbSet&lt;Eleve&gt; Eleves =&gt; Set&lt;Eleve&gt;();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AutoEcoleDbContext).Assembly);
+    }
+}</code></pre>
+  <p><code>base.OnModelCreating</code> n'est pas décoratif&nbsp;: c'est là que le cadre pose le filtre
+    de suppression logique et les conventions d'audit. L'oublier fait disparaître les droits
+    et réapparaître les lignes supprimées.</p>
+
+  <h2>Temps réel&nbsp;: la ligne à ne pas oublier</h2>
+  <pre><code>// dans la migration qui ajoute une table que les postes doivent partager
+migrationBuilder.Sql(SyncNotifySql.Script("framework_sync", new[] { "Eleves" }));</code></pre>
+  <div class="encadre danger">
+    <span class="t">Attention</span>
+    <p><code>dotnet ef migrations remove</code> puis <code>migrations add</code> écrase le SQL du trigger
+      ajouté à la main dans <code>Initial</code>. Le remettre dans la foulée&nbsp;: sinon les postes ne se
+      notifieront plus rien, <b>et rien ne le dira à l'écran</b>.</p>
+  </div>
+
+  <h2>Les trois branchements d'un écran</h2>
+  <table>
+    <thead><tr><th style="width:34%">Où</th><th>Quoi</th></tr></thead>
+    <tbody>
+      <tr><td><code>ShellViewModel._tousLesItems</code></td>
+        <td>La <code>NavigationItem</code> avec sa permission requise&nbsp;: c'est ce filtre qui décide
+          de la barre latérale à chaque session.</td></tr>
+      <tr><td><code>App.xaml</code></td><td>Le <code>DataTemplate</code> ViewModel → View.</td></tr>
+      <tr><td><code>App.xaml.cs</code></td><td><code>services.AddTransient&lt;MonEcranViewModel&gt;()</code>.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>La matrice du produit</h2>
+  <pre><code>// App.xaml.cs — à la place de MatriceParDefaut.Creer()
+// ElevesDroits = la classe de clés du produit, même convention module.verbe
+services.AddSingleton&lt;IMatriceRoles&gt;(_ =&gt; new MatriceRoles(new[]
+{
+    new RoleDefini("Direction", "Direction", new[] { Droits.Tout }),
+
+    new RoleDefini("Secrétariat", "Secrétariat", new[]
+    {
+        Droits.TableauDeBordConsulter,
+        ElevesDroits.Consulter,                       // "eleves.consulter"
+        ElevesDroits.Cle(Droits.VerbeModifier),       // "eleves.modifier"
+    }, new[] { "Accueil" }) { Description = "Inscrit, encaisse, ne supprime pas." },
+
+    new RoleDefini("Accueil", "Accueil", new[] { ElevesDroits.Consulter }),
+}));</code></pre>
+  <p>Trois règles tiennent tout le RBAC du produit&nbsp;:</p>
+  <ul>
+    <li>Un rôle que la matrice ne connaît pas <b>ne donne aucun droit</b> — y compris un rôle écrit
+      à la main en base par erreur.</li>
+    <li><code>Peut()</code> grise l'écran&nbsp;; <code>Exiger()</code> refuse l'écriture. Les deux, toujours.</li>
+    <li>Une permission se déclare dans une constante (<code>module.verbe</code>), jamais en saisie libre
+      au pied d'un bouton.</li>
+  </ul>
+
+  <div class="encadre attention">
+    <span class="t">Ce que le socle ne donne pas</span>
+    <p>La liste est courte et volontaire&nbsp;: l'écran de gestion des comptes, la politique de droits
+      métier, les vraies tables, les rapports du produit, le secret de licence. Voir
+      <a href="../03-plan/cahier-des-charges.html">cahier des charges § hors périmètre</a>.</p>
+  </div>
+
+  <footer class="pied">02-tutoriels/nouveau-produit.html — la version longue et technique de cette page
+    est le <code>Framework_Blueprint.md</code> à la racine du dépôt.</footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conventions et pièges mesurés — Framework</title>
+<link rel="stylesheet" href="../assets/doc.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page-head">
+    <div class="rubrique">05 · Qualité</div>
+    <h1>Conventions permanentes et pièges mesurés</h1>
+    <p class="lede">Une règle qui n'est écrite que dans la tête du dernier contributeur n'existe pas.
+      Cette page reprend les règles du cadre et surtout&nbsp;: les fautes déjà commises, leur symptôme
+      exact, et la correction tenue.</p>
+    <div class="meta">
+      <span>Source&nbsp;: <code>Framework_Blueprint.md</code> § 2 et § 3</span>
+      <span>Aligné sur&nbsp;: <b>commit fefb865</b></span>
+      <span>Règle&nbsp;: une page HTML qui diverge du blueprint = blueprint régénéré</span>
+    </div>
+  </header>
+
+  <nav class="fils"><a href="../index.html">Accueil</a> › 05 · Qualité › <b>Conventions et pièges</b></nav>
+
+  <h2>1 · Les sept règles permanentes</h2>
+  <table>
+    <thead><tr><th style="width:32%">Règle</th><th>Pourquoi elle tient lieu de loi</th></tr></thead>
+    <tbody>
+      <tr><td><b>Toute écriture passe par <code>IUnitOfWork</code></b>, un contexte neuf par opération</td>
+        <td>Un écran laissé ouvert huit heures ne doit retenir ni connexion ni entité suivie&nbsp;;
+          la portée DI est créée et libérée dans la commande.</td></tr>
+      <tr><td><b>Le temps se lit dans <code>IHorloge</code></b></td>
+        <td>Le gel de 60 s et l'expiration de licence se testent en avançant l'horloge, jamais en dormant&nbsp;:
+          un test qui dort est un test qui finit par se casser.</td></tr>
+      <tr><td><b>Zéro jargon technique à l'écran</b></td>
+        <td>Le poste parle français&nbsp;; la trame Npgsql va au journal. Une exception brute affichée
+          est un défaut, pas une aide.</td></tr>
+      <tr><td><b>Zéro secret en dur</b></td>
+        <td>Chaînes de connexion vides par conception, clé HMAC appartenant au produit.
+          <code>settings.json</code>, <code>licence.*</code>, <code>bin/</code>, <code>obj/</code>, <code>.vs/</code>
+          ne se committent jamais.</td></tr>
+      <tr><td><b>Une vue n'est jamais une sécurité</b></td>
+        <td><code>Peut()</code> grise le bouton&nbsp;; <code>Exiger()</code> refuse l'écriture dans la commande.
+          Les deux, systématiquement — un bouton caché se contourne par Entrée, raccourci ou bouton Retour.</td></tr>
+      <tr><td><b>Les droits se déclarent en code</b></td>
+        <td>Un rôle lu en base que la matrice ne connaît pas donne <b>zéro</b> droit. Le défaut est la
+          fermeture, jamais l'ouverture.</td></tr>
+      <tr><td><b>Un poste non installé sous Velopack n'est pas une anomalie</b></td>
+        <td>Le wrapper rend <code>null</code>, le poste tourne&nbsp;; l'application des mises à jour se fait
+          <b>uniquement</b> en fermeture.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>2 · Pièges mesurés — la faute, le symptôme, la correction</h2>
+  <p class="lede">Chaque ligne a été vécue dans ce dépôt. Elles sont ici pour qu'un produit dérivé
+    ne les paie pas deux fois.</p>
+  <table>
+    <thead><tr><th style="width:26%">La faute</th><th style="width:34%">Ce qui casse</th><th>La règle tenue</th></tr></thead>
+    <tbody>
+      <tr><td><code>AesGcm.Encrypt</code> appelé avec l'AAD en premier</td>
+        <td>Le code compile (surcharge positionnelle) et produit des blocs invalides&nbsp;: le déchiffrement
+          échoue plus tard, au pire endroit</td>
+        <td>Ordre réel .NET 8&nbsp;: <code>Encrypt(nonce, clair, chiffré, tag, aad)</code>. Découvert par
+          <code>Framework.Tests</code>, corrigé dans <code>EncryptionService</code>.</td></tr>
+      <tr><td>Compter sur les <em>implicit usings</em> d'un projet WPF</td>
+        <td><code>System.IO</code> et <code>System.Net.Http</code> n'en font pas partie → CS0246</td>
+        <td>Les ajouter explicitement dans les fichiers qui en ont besoin.</td></tr>
+      <tr><td>Appeler <code>WaitExitThenApplyUpdates</code> n'importe où</td>
+        <td>Paramètres positionnels &nbsp;<em>(update, silent, restartApp)</em>&nbsp;: mal placé, il bloque ou
+          applique une mise à jour en cours de travail</td>
+        <td>Appel <b>exclusivement</b> en fin de fermeture (<code>OnExit</code>), fenêtre de 60 s.</td></tr>
+      <tr><td>Rouvrir une fenêtre WPF précédemment fermée</td>
+        <td>Exception sur une instance morte — et seulement la deuxième fois</td>
+        <td>Fenêtres <code>Transient</code>&nbsp;; la nouvelle est montrée <b>avant</b> que l'ancienne ne se ferme.</td></tr>
+      <tr><td>Lier <code>PasswordBox.Password</code> dans le XAML</td>
+        <td>Ce n'est pas une <em>DependencyProperty</em> → la liaison échoue silencieusement, le mot de passe
+          reste vide</td>
+        <td>Passage au ViewModel par le code-behind à chaque frappe.</td></tr>
+      <tr><td>Consommer une clé de thème ajoutée dans un seul fichier</td>
+        <td>Le XAML compile, l'écran devient illisible au basculement clair/sombre</td>
+        <td>Toute clé nouvelle existe dans <code>Light.xaml</code> <b>et</b> <code>Dark.xaml</code>, et se consomme
+          en <code>DynamicResource</code>.</td></tr>
+      <tr><td><code>AddTransient&lt;IAuthService&gt;</code> par réflexe</td>
+        <td>Le <code>ShellViewModel</code> singleton lit une autre instance que celle de la connexion&nbsp;:
+          chip utilisateur vide et <b>tous les droits refusés</b>, même pour un Administrateur</td>
+        <td><code>AuthService</code> est <b>singleton</b>&nbsp;: il porte l'état de session du poste.</td></tr>
+      <tr><td>Ouvrir une transaction à la main avec <code>EnableRetryOnFailure</code></td>
+        <td>EF refuse&nbsp;: la stratégie de retry ne peut pas envelopper une transaction explicite</td>
+        <td>Toujours <code>ExecuteInTransactionAsync</code>, qui crée la stratégie.</td></tr>
+      <tr><td>Inventer un identifiant de poste pour l'anti-écho</td>
+        <td>Le notificateur se dédupe mal&nbsp;: le poste émetteur se recharge lui-même, ou un autre ne se
+          recharge jamais</td>
+        <td>Le <code>sender</code> est l'<code>Application Name</code> de la connexion
+          (<code>framework-{MachineName}-{ProcessId}</code>)&nbsp;; <code>BuildConnectionString</code> est obligatoire,
+          y compris pour l'outil de migration.</td></tr>
+      <tr><td>Laisser Npgsql tirer EF Core en transitoire</td>
+        <td>Npgsql 9.0.4 amène EF 9.0.1 → <code>CS1705</code> / <code>MSB3277</code> dès qu'un projet consomme Design</td>
+        <td>Épingler <code>Microsoft.EntityFrameworkCore</code> et <code>.Relational</code> en <b>9.0.10</b> dans
+          <code>Framework.Data</code>.</td></tr>
+      <tr><td>Mettre <code>Microsoft.EntityFrameworkCore.Design</code> dans <code>Framework.WPF</code></td>
+        <td>La DLL fuite dans la sortie de l'app par le projet de tests malgré <code>PrivateAssets=all</code>, et
+          l'outil EF déclare&nbsp;: «&nbsp;<code>Your target project 'FrameworkDemo' doesn't match your migrations
+          assembly 'Framework.Data'</code>&nbsp;»</td>
+        <td>Design vit dans l'assembly <b>des migrations</b>, jamais dans le projet hôte de l'UI.</td></tr>
+      <tr><td><code>dotnet ef</code> sans <code>--project Framework.Data</code></td>
+        <td>Le contexte est instancié hors DI (échec <code>DbContextOptions</code>) et l'hôte générique de
+          <code>App.xaml.cs</code> plante sur la <code>ResourceDictionary</code> WPF</td>
+        <td>Le <code>--project</code> n'est pas optionnel.</td></tr>
+      <tr><td>Usiner une fabrique de conception qui invente une chaîne de connexion</td>
+        <td>Une migration générée contre une base fictive, appliable nulle part</td>
+        <td>La fabrique <b>relit</b> les réglages du poste et refuse, en français, sans configuration.
+          <code>Framework.Data</code> ne peut pas référencer <code>Framework.Common</code> (cycle) → lecteur interne,
+          en lecture seule.</td></tr>
+      <tr><td><code>dotnet ef migrations remove</code> puis <code>add</code></td>
+        <td>Écrase le SQL du trigger ajouté à la main dans <code>Initial</code>&nbsp;: les postes ne se notifieront
+          plus rien, <b>et rien ne le dira</b></td>
+        <td>Remettre <code>SyncNotifySql.Script(...)</code> dans la foulée&nbsp;; contrôler <code>pg_trigger</code>.</td></tr>
+      <tr><td>Déclencher le filtrage de liste à chaque frappe</td>
+        <td>Deux requêtes concurrentes et une liste qui ne correspond à aucune des deux</td>
+        <td>Le filtre s'applique sur le bouton «&nbsp;Actualiser&nbsp;», avec garde
+          <code>_rechargementEnCours</code>.</td></tr>
+      <tr><td>Monter une suite de tests qui a besoin d'une base réelle</td>
+        <td>Elle ne passe plus sur la machine d'à côté, ni en CI</td>
+        <td>EF InMemory + horloge pilotée suffisent pour les décisions&nbsp;; le SQL réel reste l'affaire
+          des postes (et du parcours T3).</td></tr>
+    </tbody>
+  </table>
+
+  <h2>3 · Politique de secrets et de fichiers locaux</h2>
+  <table>
+    <thead><tr><th style="width:36%">Élément</th><th style="width:26%">Où il vit</th><th>Règle</th></tr></thead>
+    <tbody>
+      <tr><td>Réglages réseau du poste</td><td><code>%LocalAppData%\{NomApplication}\settings.json</code></td>
+        <td>Jamais committé, jamais copié d'un poste à l'autre&nbsp;; un fichier cabossé fait redémarrer à vide.</td></tr>
+      <tr><td>Licence du poste</td><td><code>%ProgramData%\{NomApplication}\licence.json</code></td>
+        <td>Statut = signature + empreinte machine + date&nbsp;; la panne réseau ne révoque jamais.</td></tr>
+      <tr><td>Journal applicatif</td><td><code>%AppData%\{NomApplication}\Logs\app-{date}.log</code></td>
+        <td>Un fichier par jour, quinze conservés&nbsp;; c'est là que va la trame technique.</td></tr>
+      <tr><td>Secrets de build (DSN Sentry, clé HMAC)</td><td>maintenus hors dépôt par le produit</td>
+        <td>Le cadre expose des <em>démo-valeurs</em> assumées et documentées comme telles, jamais un secret.</td></tr>
+      <tr><td>Artefacts</td><td><code>bin/</code>, <code>obj/</code>, <code>.vs/</code>, <code>publish/</code>, <code>TestResults/</code></td>
+        <td>Exclus par <code>.gitignore</code> fourni&nbsp;; un commit qui en contient un est repris.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>4 · Contrat de mise à jour de cette documentation</h2>
+  <ol>
+    <li><span class="qui qui-agent">Agent</span>&nbsp;: chaque commit de brique met à jour le blueprint
+      <b>et</b> les pages touchées (table des briques, feuille de route, compteurs de tests, en-tête
+      <code>commit</code>).</li>
+    <li><span class="qui qui-agent">Agent</span>&nbsp;: un piège rencontré et corrigé rejoint la table § 2
+      dans le même commit que le correctif — c'est le seul endroit où il ne se perdra pas.</li>
+    <li><span class="qui qui-vous">Exploitant</span>&nbsp;: chaque jeu manuel remplit la
+      <a href="../04-manuel-test/fiche-de-recette.html">fiche de recette</a>&nbsp;; une case KO sans phrase
+      exacte ne se transmet pas.</li>
+    <li>Hiérarchie en cas de divergence&nbsp;: <b>le code</b>, puis <code>Framework_Blueprint.md</code>,
+      puis cette page.</li>
+  </ol>
+
+  <footer class="pied">05-qualite/conventions-et-pieges.html — page la plus rentable du dossier&nbsp;:
+    chaque ligne a coûté une session de débogage.</footer>
+
+</div>
+</body>
+</html>
