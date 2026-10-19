@@ -1,9 +1,11 @@
 using Framework.Core.Auth;
+using Framework.Core.Data;
 using Framework.Core.Security;
 using Framework.Core.Time;
 using Framework.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 
 namespace Framework.Data.Services;
 
@@ -108,7 +110,20 @@ public sealed class AuthService : IAuthService
     public async Task<bool> HasAnyAccountAsync(CancellationToken cancellationToken = default)
     {
         await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
-        return await context.Comptes.AnyAsync(cancellationToken);
+
+        try
+        {
+            return await context.Comptes.AnyAsync(cancellationToken);
+        }
+        catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.UndefinedTable)
+        {
+            // 42P01 : le serveur répond, la base aussi, seules les tables
+            // manquent. Le dire évite de faire reconfigurer un poste
+            // parfaitement câblé.
+            var nomBase = context.Database.GetDbConnection().Database;
+            _logger.LogError(ex, "Schéma absent de la base {Database}", nomBase);
+            throw new SchemaNonInstalleException(nomBase);
+        }
     }
 
     /// <summary>

@@ -140,4 +140,54 @@ public class ConnectionConfigViewModelTests
         Assert.False(vue.EstConfigure);
         Assert.False(settings.Has(PostgresConnectionResolver.SettingsKey));
     }
+
+    [Fact]
+    public void Finaliser_NotifieLaFermetureEtRessourceLeResolver()
+    {
+        ISettingsService settings = new ReglagesEnMemoire();
+        var resolver = new PostgresConnectionResolver(settings, NullLogger<PostgresConnectionResolver>.Instance);
+        var vue = new ConnectionConfigViewModel(
+            settings, NullLogger<ConnectionConfigViewModel>.Instance, resolver);
+
+        vue.Hote = "10.0.0.9";
+        vue.Port = "5433";
+        vue.Base = "salon";
+        vue.Utilisateur = "postgres";
+
+        var levees = new List<string?>();
+        vue.PropertyChanged += (_, e) => levees.Add(e.PropertyName);
+
+        vue.Finaliser("La base a été créée sur le serveur. Elle est vide de tables : "
+            + "installez le schéma avec la migration EF avant de créer le premier compte.");
+
+        // Sans cette notification, la fenêtre d'assistant reste ouverte sur un
+        // poste pourtant enregistré — l'exploitant croit l'enregistrement refusé.
+        Assert.Contains(nameof(ConnectionConfigViewModel.EstConfigure), levees);
+        Assert.True(vue.EstConfigure);
+        Assert.True(vue.ResultatPositif);
+
+        Assert.Equal("10.0.0.9", resolver.Host);
+        Assert.Equal(5433, resolver.Port);
+        Assert.Equal("salon", resolver.Database);
+
+        Assert.Contains("vide de tables", vue.MessageResultat);
+        Assert.Contains("ce poste est prêt", vue.MessageResultat);
+    }
+
+    [Fact]
+    public async Task Enregistrer_DiagnosticÉchoué_NLèvePasLaNotificationDeFermeture()
+    {
+        var (vue, _) = CreerAssistant();
+        vue.Hote = "127.0.0.1";
+        vue.Port = "1";
+        vue.Base = "base_test";
+        vue.Utilisateur = "user";
+
+        var levees = new List<string?>();
+        vue.PropertyChanged += (_, e) => levees.Add(e.PropertyName);
+
+        await vue.EnregistrerCommand.ExecuteAsync(null);
+
+        Assert.DoesNotContain(nameof(ConnectionConfigViewModel.EstConfigure), levees);
+    }
 }

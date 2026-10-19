@@ -45,7 +45,11 @@ public partial class ConnectionConfigViewModel : ObservableObject
     [ObservableProperty]
     private bool _resultatPositif;
 
-    /// <summary>True quand l'utilisateur ferme la fenêtre après un enregistrement réussi.</summary>
+    /// <summary>
+    /// Vrai dès que l'enregistrement a réussi. Sa notification est ce qui ferme
+    /// l'assistant : une propriété simple ne la lève jamais, et la fenêtre
+    /// resterait ouverte sur un poste pourtant configuré.
+    /// </summary>
     public bool EstConfigure { get; private set; }
 
     public ConnectionConfigViewModel(
@@ -126,6 +130,8 @@ public partial class ConnectionConfigViewModel : ObservableObject
             var reglages = ReglagesActuels();
 
             var connexion = await PostgresConnectionResolver.TestConnectionAsync(reglages, logger: _logger);
+            string? prelude = null;
+
             if (connexion.Status == PgConnectionStatus.BaseIntrouvable)
             {
                 var creation = await PostgresConnectionResolver.GarantirBaseAsync(reglages, logger: _logger);
@@ -138,7 +144,11 @@ public partial class ConnectionConfigViewModel : ObservableObject
                     return;
                 }
 
-                MessageResultat = "La base a été créée sur le serveur.";
+                // Une base créée ici est vide : l'annoncer maintenant évite le
+                // diagnostic « problème réseau » sur un poste simplement non migré.
+                prelude = "La base a été créée sur le serveur. Elle est vide de tables : "
+                    + "installez le schéma avec la migration EF "
+                    + "(dotnet ef database update --project Framework.Data) avant de créer le premier compte.";
             }
             else if (connexion.Status != PgConnectionStatus.Ok)
             {
@@ -147,21 +157,35 @@ public partial class ConnectionConfigViewModel : ObservableObject
                 return;
             }
 
-            _settings.Set(PostgresConnectionResolver.SettingsKey, reglages);
-
-            // Le poste continue sans redémarrer : le resolver singleton relit
-            // les réglages, la fabrique EF et l'écouteur repartent dessus.
-            _resolver.Actualiser();
-
-            EstConfigure = true;
-            ResultatPositif = true;
-            MessageResultat = (MessageResultat is null ? "" : MessageResultat + "\n")
-                + "Réglages enregistrés : ce poste est prêt.";
+            Finaliser(prelude);
         }
         finally
         {
             EstOccupe = false;
         }
+    }
+
+    /// <summary>
+    /// Écrit les réglages, ressource le resolver à chaud et annonce la fin de
+    /// l'assistant. Séparé du test réseau pour que cette partie — la seule qui
+    /// touche au dépôt local — se vérifie sans serveur joignable.
+    /// </summary>
+    public void Finaliser(string? prelude)
+    {
+        var reglages = ReglagesActuels();
+
+        _settings.Set(PostgresConnectionResolver.SettingsKey, reglages);
+
+        // Le poste continue sans redémarrer : le resolver singleton relit
+        // les réglages, la fabrique EF et l'écouteur repartent dessus.
+        _resolver.Actualiser();
+
+        EstConfigure = true;
+        OnPropertyChanged(nameof(EstConfigure));
+
+        ResultatPositif = true;
+        MessageResultat = (string.IsNullOrEmpty(prelude) ? "" : prelude + "\n\n")
+            + "Réglages enregistrés : ce poste est prêt.";
     }
 
     private bool ValiderFormulaire()

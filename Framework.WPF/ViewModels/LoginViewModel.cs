@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Framework.Core.Auth;
+using Framework.Core.Data;
 using Framework.Core.Notifications;
 using Framework.Core.Rbac;
 
@@ -51,6 +52,14 @@ public partial class LoginViewModel : ObservableObject
         try
         {
             ModePremierCompte = !await _auth.HasAnyAccountAsync();
+        }
+        catch (SchemaNonInstalleException ex)
+        {
+            // Le poste est bien branché : c'est son schéma qui manque. Renvoyer
+            // l'exploitant vers la configuration réseau le ferait sécher les
+            // mêmes réglages pendant des heures.
+            MessageErreur = ex.Message;
+            _alertes.Error(ex.Message);
         }
         catch (Exception ex)
         {
