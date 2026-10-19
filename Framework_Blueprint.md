@@ -35,9 +35,21 @@ copier/renommer →  entités + contexte →   migrations + synchro →  premier
    Déclarer à la composition root : `services.AddFrameworkData<AutoEcoleDbContext>();`
 3. **30 min — base et temps réel.** Base créée par l'**assistant réseau** au
    premier lancement (il teste, crée la base si absente, écrit les réglages).
-   Migration : `dotnet ef migrations add Initial` (avec une
-   `IDesignTimeDbContextFactory`). Synchro inter-postes dans une migration :
+   La migration `Initial` du socle est **déjà fournie** dans
+   `Framework.Data/Migrations` et la fabrique de conception
+   `Framework.Data/Design/DesignTimeDbContextFactory.cs` lit ces réglages : sur
+   un poste neuf, après l'assistant, une seule commande et rien à écrire —
+   ```text
+   dotnet tool install --global dotnet-ef --version 9.0.10
+   dotnet ef migrations list   --project Framework.Data    # contrôle
+   dotnet ef database update   --project Framework.Data    # applique + trigger
+   ```
+   Nouvelle table du produit ? `dotnet ef migrations add AjoutEleves --project
+   Framework.Data --startup-project Framework.WPF`, puis dans la migration :
    `migrationBuilder.Sql(SyncNotifySql.Script("framework_sync", new[] { "Eleves" }));`
+   Sans `--project`, l'outil cherche les migrations dans le projet de démarrage
+   et l'applications hôte (Hosting) échoue à charger `App.xaml` : préciser
+   `Framework.Data`.
 4. **30 min — premier écran.** `ElevesViewModel` (ObservableObject) avec
    `IUnitOfWork` transitoire + `uow.Repository<Eleve>()` ; ajouter la
    `NavigationItem` dans `ShellViewModel.Items`, le `DataTemplate` dans
@@ -57,7 +69,7 @@ Framework.sln
 ├── Framework.Data      net8.0          EF Core 9 + Npgsql — sans UI
 ├── Framework.Common    net8.0-windows  réglages, chiffrement, licence, Velopack, Sentry, PDF/CSV
 ├── Framework.WPF       net8.0-windows  shell : hôte DI, navigation, thème, écrans
-└── Framework.Tests     net8.0-windows  101 tests xUnit — sans base de données réelle
+└── Framework.Tests     net8.0-windows  106 tests xUnit — sans base de données réelle
 ```
 
 Dépendances toujours dans ce sens : `WPF → Common → Core` et `WPF → Data → Core`.
@@ -75,6 +87,7 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
 | Data | `PostgresConnectionResolver` | chaîne de connexion **source unique**, `Actualiser()` à chaud après assistant, test par SQLSTATE en message français, `GarantirBaseAsync` (whitelist du nom de base) |
 | Data | `PostgresSyncListener` | LISTEN/NOTIFY hors pool, battement de cœur 30 s, backoff 1→30 s, anti-écho `sender` |
 | Data | `SyncNotifySql` | fonction plpgsql + trigger AFTER I/U/D par table |
+| Data | `Design/DesignTimeDbContextFactory` + `Migrations/` | **migration `Initial` fournie** (table `Comptes` + trigger de synchro) : l'outil EF lit les réglages de l'assistant, même chaîne d'anti-écho |
 | Data | `AuthService` | session + anti-force-brute (3 échecs → gel 60 s via `IHorloge`), amorce du premier compte |
 | Common | `JsonSettingsService` | `%LocalAppData%\{AppName}\settings.json`, atomique, fichier cabossé = redémarrage à vide |
 | Common | `EncryptionService` | clé AES-256-GCM par machine sous DPAPI, blocs + AAD (nonce+index), `Protect/Unprotect` |
@@ -90,8 +103,8 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
 | WPF | `App.xaml.cs` | composition root ; Velopack en toute première ligne ; ouverture **automatique de l'assistant réseau** si le poste n'est pas configuré |
 | WPF | `ThemeService` / `NavigationService` / `ShellViewModel` | thème à chaud + accent persisté ; pile de types résolue en DI ; sidebar rétractable |
 | WPF | `ConnectionConfigWindow` | **assistant réseau autonome** : test, création de base, enregistrement — premier écran d'un poste neuf |
-| Tests | `Framework.Tests` | hachage, chiffrement (fichier + DPAPI), licence/HWID complète, réglages, CSV/PDF, resolver + assistant, `AuthService` (gel inclus) sur EF InMemory |
-| CI | `.github/workflows/framework-ci.yml` | windows-latest : Release build + 101 tests sur tout push touchant le framework |
+| Tests | `Framework.Tests` | hachage, chiffrement (fichier + DPAPI), licence/HWID complète, réglages, CSV/PDF, resolver + assistant, `AuthService` (gel inclus) sur EF InMemory, fabrique de conception (migrations) |
+| CI | `.github/workflows/framework-ci.yml` | windows-latest : Release build + 106 tests sur tout push touchant le framework |
 
 ## 2. Règles permanentes du framework
 
@@ -128,6 +141,24 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
   obligatoire, y compris pour l'outil de migration.
 - Les **`PackageReference` sont épinglées** sur les versions du dépôt hôte
   (EF 9.0.10, Npgsql 9.0.4, QuestPDF 2026.2.4, xunit 2.6.2).
+- **Npgsql 9.0.4 tire EF Core 9.0.1** par transitoire : épingler
+  `Microsoft.EntityFrameworkCore` + `.Relational` en **9.0.10** dans
+  `Framework.Data`, sinon `CS1705`/`MSB3277` dès qu'un projet consomme Design.
+- **`Microsoft.EntityFrameworkCore.Design` vit dans `Framework.Data`** (l'assembly
+  des migrations), jamais dans `Framework.WPF` : `PrivateAssets=all` n'empêche
+  pas la DLL de **fuiter dans la sortie de l'app** par le biais du projet de
+  tests, et l'outil EF croit alors que le projet de démarrage porte les
+  migrations (`Your target project 'FrameworkDemo' doesn't match your migrations
+  assembly 'Framework.Data'`).
+- Toujours passer **`--project Framework.Data`** à `dotnet ef` : sans lui, l'outil
+  instancie le `DbContext` hors DI (échec `DbContextOptions` non résolu) et
+  essaie de monter l'hôte générique de `App.xaml.cs`, qui plante sur la
+  `ResourceDictionary` WPF en conception.
+- La fabrique de conception **relit `settings.json`, ne le duplique pas** : sans
+  réglages, elle refuse (`InvalidOperationException` en français) au lieu de
+  générer une migration sur une base inventée. `Framework.Data` ne peut pas
+  référencer `Framework.Common` (cycle) — d'où son lecteur de réglages interne,
+  en lecture seule.
 
 ## 4. Ce que le cadre laisse au produit
 

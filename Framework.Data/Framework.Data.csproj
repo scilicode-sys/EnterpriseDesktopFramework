@@ -14,8 +14,20 @@
        Versions épinglées sur celles du dépôt hôte (EF Core 9 sur net8.0). -->
 
   <ItemGroup>
+    <!-- Npgsql 9.0.4 entraîne EF Core 9.0.1 : on épingle le socle EF à 9.0.10
+         pour l'aligner sur Design/Hosting/Logging du dépôt hôte. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.10" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.10" />
+    <!-- Outillage EF (dotnet ef migrations add) : requis pour compiler la
+         fabrique de contexte de conception, qui vit ici car c'est cet assembly
+         qui porte les migrations. PrivateAssets = jamais transitif, la DLL
+         Microsoft.EntityFrameworkCore.Design ne fuit pas vers l'application. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.10">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <ProjectReference Include="..\Framework.Core\Framework.Core.csproj" />
   </ItemGroup>
 
