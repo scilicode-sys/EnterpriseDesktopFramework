@@ -89,7 +89,7 @@ Framework.sln
 ├── Framework.Data      net8.0          EF Core 9 + Npgsql — sans UI
 ├── Framework.Common    net8.0-windows  réglages, chiffrement, licence, Velopack, Sentry, PDF/CSV
 ├── Framework.WPF       net8.0-windows  shell : hôte DI, navigation, thème, écrans
-└── Framework.Tests     net8.0-windows  200 tests xUnit — sans base de données réelle
+└── Framework.Tests     net8.0-windows  207 tests xUnit — dont le rendu XAML des écrans
 ```
 
 Dépendances toujours dans ce sens : `WPF → Common → Core` et `WPF → Data → Core`.
@@ -132,7 +132,7 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
 | WPF | `ExempleViewModel` + `ExempleView` | **écran CRUD de référence** : liste filtrable, formulaire, suppression logique, Unit of Work par opération, recharge sur notification d'un autre poste, **boutons grisés par le droit ET par l'état** |
 | WPF | `ComptesViewModel` + `ComptesView` + `CompteLigne` | **écran de gestion des comptes** (EF-11) : créer un compte, changer un rôle, désactiver, lever un gel — sans SQL. Empreinte de mot de passe jamais remontée à la vue, liste de rôles fermée par la matrice, identifiant dupliqué refusé avant l'index unique, et **impossibilité de verrouiller sa propre session** (rôle, désactivation, suppression du compte courant refusés) |
 | Tests | `Framework.Tests` | hachage, chiffrement (fichier + DPAPI), licence/HWID complète, réglages, CSV/PDF, resolver + assistant, `AuthService` (gel inclus) sur EF InMemory, fabrique de conception (migrations), écran CRUD de référence, **matrice RBAC + `AutorisationService` + gates des écrans** (dont l'écran Comptes : empreinte seule à la création, gardes du compte courant, gel, suppression logique) |
-| CI | `.github/workflows/framework-ci.yml` | windows-latest : Release build + 200 tests sur tout push touchant le framework |
+| CI | `.github/workflows/framework-ci.yml` | windows-latest : Release build + 207 tests sur tout push touchant le framework |
 
 ## 2. Règles permanentes du framework
 
@@ -155,6 +155,11 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
   rôle du compte qui tient la session courante. Le garde se lit sur
   `IAuthService.CurrentUser` à l'exécution, jamais sur la ligne affichée —
   sinon l'exploitant peut scier la branche qui lui donne accès à l'écran.
+- **« Vérifié » veut dire écran ouvert, pas build vert** : toute vue nouvelle
+  ou modifiée est rendue par `ViewRenduTests` (thread STA, XAML réel, DataContext
+  réel, `Measure`/`Arrange`/`UpdateLayout` forcés) **et** jouée à l'écran par
+  l'exploitant avant d'être annoncée terminée. Un `XamlParseException` au rendu
+  ne quitte jamais le terminal.
 
 ## 3. Pièges mesurés, déjà désamorcés
 
@@ -241,6 +246,26 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
   Comparer une propriété ne prouve pas que l'interface se repeint. Récidive
   évitée de la même façon pour `NoteComptes`, qui passe par
   `OnNoteComptesChanged` plutôt que par un `OnPropertyChanged` manuel.
+- **Une propriété en lecture seule liée en TwoWay fait sauter l'écran, build
+  vert compris** : `Run.Text` est TwoWay *par défaut*. Posé sur `Porteurs`
+  (propriété calculée, sans setter), il levait `XamlParseException` — « Une
+  liaison TwoWay ou OneWayToSource ne peut pas fonctionner sur la propriété en
+  lecture seule » — à l'ouverture de Rôles et permissions, avec un Release à
+  0 erreur et 200 tests au vert : les tests de ViewModel n'appellent que le
+  ViewModel, jamais le XAML. Corrigé en `3e60455` par `Mode=OneWay` explicite,
+  et `ViewRenduTests` rend désormais les vraies vues (sept écrans) pour que la
+  classe de défaut ne revienne pas par un autre chemin.
+- **Rendre une vue WPF dans un test a ses trois pièges** : (1) thread STA avec
+  Dispatcher, sinon la construction de la vue lève avant le XAML ; (2) les
+  ressources du poste — `Application.ResourceAssembly` refuse d'être changée
+  une fois définie, donc `App.InitializeComponent()` résout ses URI relatives
+  contre l'assembly de lancement (`Framework.Tests`) et échoue : le hote
+  recompose les dictionnaires en `pack://application:,,,/{assembly};component/…` ;
+  (3) une vue qui pète emporte la boucle du Dispatcher — `UnhandledException`
+  avec `Handled = true`, l'exception étant gardée pour le test qui la subit,
+  sinon les tests suivants attendent 30 s une opération qui ne passe jamais.
+  Les `Window` ne se montrent jamais : on met en page leur `Content`, un
+  `Show()` enverrait une fenêtre sur le bureau de l'exploitant.
 
 ## 4. Ce que le cadre laisse au produit
 

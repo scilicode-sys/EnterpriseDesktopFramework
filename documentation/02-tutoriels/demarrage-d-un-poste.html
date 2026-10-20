@@ -18,7 +18,7 @@
       <span>Durée&nbsp;: <b>10 min</b>, base déjà créée par l'assistant</span>
       <span>Prérequis&nbsp;: <b>PostgreSQL 14+ joignable</b>, .NET 8 Desktop Runtime</span>
       <span>Renvois&nbsp;: <a href="../04-manuel-test/plan-de-qualification.html">T0, T1 et T7 du plan de qualification</a></span>
-      <span>Aligné sur&nbsp;: <b>commit 25bfcb7</b></span>
+      <span>Aligné sur&nbsp;: <b>commit 3e60455</b></span>
     </div>
   </header>
 
@@ -161,6 +161,12 @@ SELECT tgname FROM pg_trigger WHERE tgname LIKE 'TX_sync%';
         <td>Défaut corrigé en <code>d65851a</code>&nbsp;: <code>EstConfigure</code> ne levait pas
           <code>PropertyChanged</code>, la fermeture automatique était inatteignable</td>
         <td>Vérifier la version du poste&nbsp;; en attendant, la croix (X) suffit — les réglages sont écrits</td></tr>
+      <tr><td>«&nbsp;Une liaison TwoWay ou OneWayToSource ne peut pas fonctionner sur la propriété en lecture
+        seule&nbsp;…&nbsp;» en ouvrant Rôles et permissions</td>
+        <td>Build entre <code>25bfcb7</code> et <code>3e60455</code>&nbsp;: <code>Run.Text</code> se lie en TwoWay
+          par défaut, et «&nbsp;Porté par&nbsp;» est une propriété calculée sans setter</td>
+        <td><span class="qui qui-vous">Exploitant</span> recompiler sur <code>3e60455</code> ou plus récent&nbsp;—
+          le poste redémarre, l'écran s'ouvre&nbsp;; c'est aussi couvert par les tests de rendu du socle</td></tr>
       <tr><td>«&nbsp;No password has been provided but the backend requires one&nbsp;»</td>
         <td>Le champ mot de passe est <b>vide</b>&nbsp;: une <code>PasswordBox</code> ne se pré-remplit jamais,
           donc chaque réouverture de l'assistant part à vide</td>

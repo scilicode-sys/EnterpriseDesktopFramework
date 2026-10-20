@@ -17,14 +17,14 @@
       exact, et la correction tenue.</p>
     <div class="meta">
       <span>Source&nbsp;: <code>Framework_Blueprint.md</code> § 2 et § 3</span>
-      <span>Aligné sur&nbsp;: <b>commit 25bfcb7</b></span>
+      <span>Aligné sur&nbsp;: <b>commit 3e60455</b></span>
       <span>Règle&nbsp;: une page HTML qui diverge du blueprint = blueprint régénéré</span>
     </div>
   </header>
 
   <nav class="fils"><a href="../index.html">Accueil</a> › 05 · Qualité › <b>Conventions et pièges</b></nav>
 
-  <h2>1 · Les huit règles permanentes</h2>
+  <h2>1 · Les neuf règles permanentes</h2>
   <table>
     <thead><tr><th style="width:32%">Règle</th><th>Pourquoi elle tient lieu de loi</th></tr></thead>
     <tbody>
@@ -54,6 +54,11 @@
         <td>L'administrateur ne change pas son propre rôle, ne se désactive pas, ne se supprime pas&nbsp;:
           la matrice ne lui laisserait plus ouvrir l'écran, et le seul retour serait une requête SQL sur une
           table que cet écran sait pourtant tenir.</td></tr>
+      <tr><td><b>«&nbsp;Vérifié&nbsp;» veut dire écran ouvert, pas build vert</b></td>
+        <td>Un binding mal déclaré, un <code>StaticResource</code> absent ou une liste non notifiée ne
+          quittent pas le terminal&nbsp;: ils quittent l'Exploitant. Toute vue nouvelle ou modifiée est
+          rendue dans <code>ViewRenduTests</code> (thread STA, XAML réel, mise en page forcée) <b>et</b>
+          jouée à l'écran avant d'être annoncée terminée.</td></tr>
     </tbody>
   </table>
 
@@ -174,6 +179,20 @@
         <td>Le décompte est <code>int?</code>&nbsp;: null = «&nbsp;pas compté&nbsp;», et la note sous le bouton
           dit pourquoi (<code>comptes.consulter</code> absent, ou serveur injoignable). Un écran de contrôle
           montre son ignorance, il ne la remplit pas.</td></tr>
+      <tr><td>Lier une propriété en lecture seule à une cible <b>TwoWay par défaut</b></td>
+        <td>L'écran Rôles et permissions crève à l'ouverture&nbsp;: <code>XamlParseException</code> —
+          «&nbsp;Une liaison TwoWay ou OneWayToSource ne peut pas fonctionner sur la propriété en lecture seule
+          'Porteurs'&nbsp;». <code>Run.Text</code> se lie en TwoWay par défaut, et <code>Porteurs</code> est
+          calculée sans setter. Le build était à 0 erreur et les 200 tests au vert&nbsp;: <b>aucun test ne
+          chargeait le XAML.</b> Signalé par l'exploitant le 20/10/2026</td>
+        <td><code>Mode=OneWay</code> explicite sur les deux <code>Run</code> de la carte (<code>3e60455</code>).
+          Surtout&nbsp;: <code>ViewRenduTests</code> rend désormais les vraies vues sur un thread STA avec
+          Dispatcher et les ressources du poste, leur donne un DataContext réel et force
+          <code>Measure</code>/<code>Arrange</code>/<code>UpdateLayout</code> — le passage où les bindings des
+          gabarits vivent. Rouge sur le code fautif avec le message exact de l'exploitant, vert après le
+          correctif. Audit des autres vues&nbsp;: les seules autres cibles TwoWay par défaut
+          (<code>TextBox.Text</code>, <code>CheckBox.IsChecked</code>, <code>ComboBox.SelectedItem</code>)
+          liennent des propriétés avec setter.</td></tr>
     </tbody>
   </table>
 

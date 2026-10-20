@@ -15,7 +15,7 @@
     <p class="lede">Cinq projets, un sens de dépendance unique, aucune règle métier dans
       le socle. Cette page décrit ce qui existe — pas ce que votre produit va en faire.</p>
     <div class="meta">
-      <span>État du socle&nbsp;: <b>commit 25bfcb7</b> — 20/10/2026</span>
+      <span>État du socle&nbsp;: <b>commit 3e60455</b> — 20/10/2026</span>
       <span>Solution&nbsp;: <code>Framework.sln</code></span>
       <span>Exécutable produit&nbsp;: <code>FrameworkDemo.exe</code></span>
     </div>
@@ -40,7 +40,7 @@
         <td>Composition root et écrans&nbsp;: hôte DI, shell, navigation par ViewModel,
           thème à chaud, assistant réseau, écran CRUD de référence, écran des comptes, écran des droits.</td></tr>
       <tr><td><code>Framework.Tests</code></td><td>net8.0-windows</td><td>les quatre</td>
-        <td>200 tests xUnit, sans base de données réelle (EF InMemory + horloge pilotée).</td></tr>
+        <td>207 tests xUnit, dont sept qui <b>rendent les vraies vues WPF</b> sur un thread STA (XAML réel, gabarits appliqués, mise en page forcée) — le reste sans base de données réelle (EF InMemory + horloge pilotée).</td></tr>
     </tbody>
   </table>
 
@@ -147,7 +147,7 @@
           rôle aux comptes du poste sous <code>comptes.consulter</code>. Sans ce droit, l'écran dit
           «&nbsp;comptes non listés ici&nbsp;» au lieu d'inventer un zéro.</td></tr>
       <tr><td>CI</td><td><code>.github/workflows/framework-ci.yml</code></td>
-        <td>windows-latest&nbsp;: Release build + 200 tests sur tout push touchant le framework.</td></tr>
+        <td>windows-latest&nbsp;: Release build + 207 tests sur tout push touchant le framework.</td></tr>
     </tbody>
   </table>
 

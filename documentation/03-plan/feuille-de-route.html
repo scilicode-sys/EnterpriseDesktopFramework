@@ -15,8 +15,8 @@
     <p class="lede">Ce qui est livré, commit par commit&nbsp;; ce qui reste, avec pour chaque brique
       son critère d'acceptation et son dépendance. Une page à re-dater à chaque tour.</p>
     <div class="meta">
-      <span>HEAD&nbsp;: <b>25bfcb7</b> — <code>origin/main</code> synchronisé sur ce tour</span>
-      <span>Tests&nbsp;: <b>200 au vert</b></span>
+      <span>HEAD&nbsp;: <b>3e60455</b> — <code>origin/main</code> en retrait&nbsp;: le push reste sur ordre de l&#39;Exploitant</span>
+      <span>Tests&nbsp;: <b>207 au vert</b></span>
       <span>Build&nbsp;: <b>Release 0 erreur / 0 avertissement</b></span>
     </div>
   </header>
@@ -86,6 +86,15 @@
           «&nbsp;Porté par&nbsp;: 1 compte&nbsp;: stage&nbsp;», avec les comptes désactivés signalés, troncature au-delà
           de six identifiants, et <code>null</code> quand le rôle ne tient pas <code>comptes.consulter</code> —
           jamais un «&nbsp;0&nbsp;» inventé. Cinq tests de plus.</td></tr>
+      <tr><td><code>f56df00</code></td><td>Documentation&nbsp;: «&nbsp;Porté par&nbsp;» consigné</td><td><b>200</b></td>
+        <td>Deux lignes T5 au plan de qualification, encadré dans le démarrage d'un poste, 23ᵉ piège,
+          blueprint à 200, index 1.5.</td></tr>
+      <tr><td><code>3e60455</code></td><td>Crash de l'écran Rôles + tests de rendu XAML</td><td><b>207</b></td>
+        <td>Rejoué par l'exploitant le 20/10/2026&nbsp;: l'écran ne s'ouvre plus, <code>XamlParseException</code>
+          sur «&nbsp;propriété en lecture seule <code>Porteurs</code>&nbsp;». <code>Run.Text</code> se lie en TwoWay
+          par défaut — <code>Mode=OneWay</code> posé, audit des autres vues, et surtout sept tests qui
+          <b>chargent le vrai XAML</b> sur un thread STA. Le build était vert et les 200 tests au vert&nbsp;:
+          rien ne rendait les écrans.</td></tr>
     </tbody>
   </table>
 
@@ -170,27 +179,29 @@
   <table>
     <thead><tr><th style="width:38%">Page</th><th style="width:14%">Statut</th><th>Dernier alignement</th></tr></thead>
     <tbody>
-      <tr><td><code>Framework_Blueprint.md</code> (racine)</td><td><span class="statut livre">à jour</span></td><td>25bfcb7</td></tr>
+      <tr><td><code>Framework_Blueprint.md</code> (racine)</td><td><span class="statut livre">à jour</span></td><td>3e60455</td></tr>
       <tr><td><a href="../index.html">index</a> + <a href="../README.md">README</a></td>
-        <td><span class="statut livre">à jour</span></td><td>25bfcb7</td></tr>
-      <tr><td><a href="../01-structure/architecture.html">01 · architecture</a></td><td><span class="statut livre">à jour</span></td><td>25bfcb7</td></tr>
-      <tr><td><a href="../02-tutoriels/demarrage-d-un-poste.html">02 · démarrage d'un poste</a></td><td><span class="statut livre">à jour</span></td><td>25bfcb7 — section «&nbsp;Donner des collègues à ce poste&nbsp;»</td></tr>
+        <td><span class="statut livre">à jour</span></td><td>3e60455</td></tr>
+      <tr><td><a href="../01-structure/architecture.html">01 · architecture</a></td><td><span class="statut livre">à jour</span></td><td>3e60455</td></tr>
+      <tr><td><a href="../02-tutoriels/demarrage-d-un-poste.html">02 · démarrage d'un poste</a></td><td><span class="statut livre">à jour</span></td><td>3e60455 — section «&nbsp;Donner des collègues à ce poste&nbsp;»</td></tr>
       <tr><td><a href="../02-tutoriels/nouveau-produit.html">02 · nouveau produit</a></td><td><span class="statut livre">à jour</span></td><td>871c7ea</td></tr>
       <tr><td><a href="../02-tutoriels/ajouter-ecran-metier.html">02 · ajouter un écran métier</a></td><td><span class="statut livre">à jour</span></td><td>871c7ea</td></tr>
-      <tr><td><a href="cahier-des-charges.html">03 · cahier des charges</a></td><td><span class="statut livre">à jour</span></td><td>871c7ea (EF-11 livré) · aligné 25bfcb7</td></tr>
-      <tr><td><a href="feuille-de-route.html">03 · feuille de route</a></td><td><span class="statut livre">à jour</span></td><td>25bfcb7</td></tr>
+      <tr><td><a href="cahier-des-charges.html">03 · cahier des charges</a></td><td><span class="statut livre">à jour</span></td><td>871c7ea (EF-11 livré) · aligné 3e60455</td></tr>
+      <tr><td><a href="feuille-de-route.html">03 · feuille de route</a></td><td><span class="statut livre">à jour</span></td><td>3e60455</td></tr>
       <tr><td><a href="../04-manuel-test/plan-de-qualification.html">04 · plan de qualification</a></td>
         <td><span class="statut en-cours">entamé</span></td>
         <td>T0 et T1 joués le 19/10/2026 sur <code>Framework_Test</code>&nbsp;; trois anomalies relevées,
           corrigées en <code>d65851a</code>. T7 entamé le 20/10/2026&nbsp;: création d'un Lecteur à l'écran
           <b>jouée et acceptée</b>. Anomalie T5 (bouton «&nbsp;Recharger&nbsp;» sans effet) signalée le
           20/10/2026, corrigée en <code>48cbb97</code>&nbsp;— <b>à rejouer</b>, avec la ligne «&nbsp;Porté
-          par&nbsp;» ajoutée en <code>25bfcb7</code>. T2→T4 et T6 sans verdict.</td></tr>
+          par&nbsp;» ajoutée en <code>25bfcb7</code>. Cette seconde modification a <b>cassé l'ouverture de
+          l'écran</b> (anomalie relevée par l'exploitant le 20/10/2026, corrigée en <code>3e60455</code>)&nbsp;:
+          T5 reste <b>à rejouer sur ce build</b>. T2→T4 et T6 sans verdict.</td></tr>
       <tr><td><a href="../04-manuel-test/fiche-de-recette.html">04 · fiche de recette</a></td>
         <td><span class="statut en-cours">à remplir par l'exploitant</span></td>
         <td>les trois anomalies du soir ne valent pas recette&nbsp;: la fiche reste à saisir</td></tr>
       <tr><td><a href="../05-qualite/conventions-et-pieges.html">05 · conventions et pièges</a></td>
-        <td><span class="statut livre">à jour</span></td><td>25bfcb7 — trois pièges de plus</td></tr>
+        <td><span class="statut livre">à jour</span></td><td>3e60455 — vingt-quatrième piège et règle n° 9</td></tr>
     </tbody>
   </table>
 
