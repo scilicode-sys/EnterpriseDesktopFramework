@@ -17,7 +17,7 @@
       chaque tour de chantier.</p>
     <div class="meta">
       <span>Version&nbsp;: <b>1.0</b></span>
-      <span>Aligné sur&nbsp;: <b>commit 01a49dd</b> (20/10/2026)</span>
+      <span>Aligné sur&nbsp;: <b>commit 48cbb97</b> (20/10/2026)</span>
       <span>Statut&nbsp;: <span class="statut en-cours">vivant</span></span>
     </div>
   </header>
@@ -135,7 +135,7 @@
       <tr><td>EN-01</td><td>Build Release à 0 erreur <b>et</b> 0 avertissement</td>
         <td><span class="qui qui-agent">Agent</span> <code>dotnet build Framework.sln -c Release</code> avant chaque commit.</td></tr>
       <tr><td>EN-02</td><td>Suite automatique 100&nbsp;% verte, sans base réelle</td>
-        <td><span class="qui qui-agent">Agent</span> <code>dotnet test</code>&nbsp;; 194 tests à ce jour, EF InMemory
+        <td><span class="qui qui-agent">Agent</span> <code>dotnet test</code>&nbsp;; 195 tests à ce jour, EF InMemory
           et horloge pilotée uniquement.</td></tr>
       <tr><td>EN-03</td><td>Aucun secret en dur, aucun réglage local committé</td>
         <td><code>.gitignore</code> exclut <code>settings.json</code>, <code>licence.*</code>, <code>bin/</code>,
@@ -193,7 +193,7 @@
     <thead><tr><th style="width:34%">Risque</th><th style="width:14%">Gravité</th><th>Mesure prise ou proposée</th></tr></thead>
     <tbody>
       <tr><td>L'écran Comptes n'a jamais été joué&nbsp;: sa dette est une recette, pas du SQL</td>
-        <td><span class="statut en-cours">faible</span></td><td>EF-11 livré en <code>871c7ea</code> (suite portée de 168 à 194)
+        <td><span class="statut en-cours">faible</span></td><td>EF-11 livré en <code>871c7ea</code> (suite portée de 168 à 195)
           ; reste à jouer <a href="../04-manuel-test/plan-de-qualification.html#t7">T7</a>. Tant que T4/T7
           n'ont pas de verdict, la création de compte en SQL reste la porte de secours documentée.</td></tr>
       <tr><td>Le rendu WPF n'est jamais prouvé par la suite automatique</td>

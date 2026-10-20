@@ -17,7 +17,7 @@
       exact, et la correction tenue.</p>
     <div class="meta">
       <span>Source&nbsp;: <code>Framework_Blueprint.md</code> § 2 et § 3</span>
-      <span>Aligné sur&nbsp;: <b>commit 01a49dd</b></span>
+      <span>Aligné sur&nbsp;: <b>commit 48cbb97</b></span>
       <span>Règle&nbsp;: une page HTML qui diverge du blueprint = blueprint régénéré</span>
     </div>
   </header>
@@ -160,6 +160,14 @@
           du premier compte est fermée, et la remise en état ne se fait plus qu'en SQL</td>
         <td>Trois gardes nommées à l'écran (propre rôle, propre inactivation, propre suppression), chacune
           testée. Un refus qui explique ce qu'il protège vaut mieux qu'un bouton absent.</td></tr>
+      <tr><td>Recharger une liste que la vue ne voit pas changer</td>
+        <td>Bouton «&nbsp;Recharger&nbsp;» sans effet à l'écran sur Rôles et permissions&nbsp;: le badge
+          «&nbsp;session courante&nbsp;» reste sur l'ancienne carte alors que le ViewModel a recalculé. Signalé
+          par l'exploitant le 20/10/2026, après la création de son premier compte Lecteur</td>
+        <td><code>Roles</code> est passée en <code>[ObservableProperty]</code>&nbsp;: le recalcul doit lever
+          <code>PropertyChanged</code> pour que <code>ItemsSource</code> se repeigne. Le test
+          <code>Recharger_Nouvelle_Roles_QueLaVueEstAvertie</code> écoute l'événement — un test qui ne compare
+          que la valeur laisse passer ce genre de bouton mort.</td></tr>
     </tbody>
   </table>
 

@@ -15,8 +15,8 @@
     <p class="lede">Ce qui est livré, commit par commit&nbsp;; ce qui reste, avec pour chaque brique
       son critère d'acceptation et son dépendance. Une page à re-dater à chaque tour.</p>
     <div class="meta">
-      <span>HEAD&nbsp;: <b>01a49dd</b> — <code>origin/main</code> synchronisé sur ce tour</span>
-      <span>Tests&nbsp;: <b>194 au vert</b></span>
+      <span>HEAD&nbsp;: <b>48cbb97</b> — <code>origin/main</code> synchronisé sur ce tour</span>
+      <span>Tests&nbsp;: <b>195 au vert</b></span>
       <span>Build&nbsp;: <b>Release 0 erreur / 0 avertissement</b></span>
     </div>
   </header>
@@ -70,8 +70,15 @@
       <tr><td><code>01a49dd</code></td><td>Phrases alignées sur les droits + documentation</td><td><b>194</b></td>
         <td>La description du rôle Utilisateur disait «&nbsp;ne touche ni comptes ni paramètres&nbsp;» alors que
           la matrice lui donne <code>comptes.consulter</code> et <code>parametres.consulter</code>&nbsp;; le garde
-          d'inactivation employait un verbe que le bouton ne prononce pas. Documentation réalignée en conséquence&nbsp;:
+          de désactivation employait un verbe que le bouton ne prononce pas. Documentation réalignée en conséquence&nbsp;:
           T7 ajouté au plan, section «&nbsp;Donner des collègues à ce poste&nbsp;» au tutoriel du poste, blueprint.</td></tr>
+      <tr><td><code>8c6b14f</code></td><td>Documentation&nbsp;: T7, blueprint, compte par compte</td><td><b>194</b></td>
+        <td>Cette fois pour le tour complet : règle permanente n° 8, quatre nouveaux pièges, blueprint
+          à 194 tests, et la réponse écrite à «&nbsp;comment créer un second compte et les faire communiquer&nbsp;».</td></tr>
+      <tr><td><code>48cbb97</code></td><td>Bouton « Recharger » de l'écran Rôles (anomalie T5)</td><td><b>195</b></td>
+        <td>Joué par l'exploitant le 20/10/2026 après la création de son premier Lecteur&nbsp;: le clic ne
+          repeignait rien. <code>Roles</code> ne levait pas <code>PropertyChanged</code>&nbsp;; la liste est passée
+          en <code>[ObservableProperty]</code> et un test écoute l'événement au lieu de comparer seulement la valeur.</td></tr>
     </tbody>
   </table>
 
@@ -156,24 +163,26 @@
   <table>
     <thead><tr><th style="width:38%">Page</th><th style="width:14%">Statut</th><th>Dernier alignement</th></tr></thead>
     <tbody>
-      <tr><td><code>Framework_Blueprint.md</code> (racine)</td><td><span class="statut livre">à jour</span></td><td>01a49dd</td></tr>
+      <tr><td><code>Framework_Blueprint.md</code> (racine)</td><td><span class="statut livre">à jour</span></td><td>48cbb97</td></tr>
       <tr><td><a href="../index.html">index</a> + <a href="../README.md">README</a></td>
-        <td><span class="statut livre">à jour</span></td><td>01a49dd</td></tr>
-      <tr><td><a href="../01-structure/architecture.html">01 · architecture</a></td><td><span class="statut livre">à jour</span></td><td>01a49dd</td></tr>
+        <td><span class="statut livre">à jour</span></td><td>48cbb97</td></tr>
+      <tr><td><a href="../01-structure/architecture.html">01 · architecture</a></td><td><span class="statut livre">à jour</span></td><td>48cbb97</td></tr>
       <tr><td><a href="../02-tutoriels/demarrage-d-un-poste.html">02 · démarrage d'un poste</a></td><td><span class="statut livre">à jour</span></td><td>01a49dd — section «&nbsp;Donner des collègues à ce poste&nbsp;»</td></tr>
-      <tr><td><a href="../02-tutoriels/nouveau-produit.html">02 · nouveau produit</a></td><td><span class="statut livre">à jour</span></td><td>01a49dd</td></tr>
-      <tr><td><a href="../02-tutoriels/ajouter-ecran-metier.html">02 · ajouter un écran métier</a></td><td><span class="statut livre">à jour</span></td><td>01a49dd</td></tr>
-      <tr><td><a href="cahier-des-charges.html">03 · cahier des charges</a></td><td><span class="statut livre">à jour</span></td><td>871c7ea (EF-11 livré) · aligné 01a49dd</td></tr>
-      <tr><td><a href="feuille-de-route.html">03 · feuille de route</a></td><td><span class="statut livre">à jour</span></td><td>01a49dd</td></tr>
+      <tr><td><a href="../02-tutoriels/nouveau-produit.html">02 · nouveau produit</a></td><td><span class="statut livre">à jour</span></td><td>871c7ea</td></tr>
+      <tr><td><a href="../02-tutoriels/ajouter-ecran-metier.html">02 · ajouter un écran métier</a></td><td><span class="statut livre">à jour</span></td><td>871c7ea</td></tr>
+      <tr><td><a href="cahier-des-charges.html">03 · cahier des charges</a></td><td><span class="statut livre">à jour</span></td><td>871c7ea (EF-11 livré) · aligné 48cbb97</td></tr>
+      <tr><td><a href="feuille-de-route.html">03 · feuille de route</a></td><td><span class="statut livre">à jour</span></td><td>48cbb97</td></tr>
       <tr><td><a href="../04-manuel-test/plan-de-qualification.html">04 · plan de qualification</a></td>
         <td><span class="statut en-cours">entamé</span></td>
         <td>T0 et T1 joués le 19/10/2026 sur <code>Framework_Test</code>&nbsp;; trois anomalies relevées,
-          corrigées en <code>d65851a</code>. T2→T7 sans verdict, T7 ajouté en <code>871c7ea</code>.</td></tr>
+          corrigées en <code>d65851a</code>. T7 entamé le 20/10/2026&nbsp;: création d'un Lecteur à l'écran
+          <b>jouée et acceptée</b>. Une anomalie T5 signalée le 20/10/2026 (bouton «&nbsp;Recharger&nbsp;» sans
+          effet), corrigée en <code>48cbb97</code>. T2→T4 et T6 sans verdict.</td></tr>
       <tr><td><a href="../04-manuel-test/fiche-de-recette.html">04 · fiche de recette</a></td>
         <td><span class="statut en-cours">à remplir par l'exploitant</span></td>
         <td>les trois anomalies du soir ne valent pas recette&nbsp;: la fiche reste à saisir</td></tr>
       <tr><td><a href="../05-qualite/conventions-et-pieges.html">05 · conventions et pièges</a></td>
-        <td><span class="statut livre">à jour</span></td><td>01a49dd — règle «&nbsp;un écran ne se verrouille jamais lui-même&nbsp;»</td></tr>
+        <td><span class="statut livre">à jour</span></td><td>48cbb97 — règle + piège «&nbsp;liste non notifiée&nbsp;»</td></tr>
     </tbody>
   </table>
 
