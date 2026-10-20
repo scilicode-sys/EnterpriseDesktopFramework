@@ -5,13 +5,17 @@ using Microsoft.EntityFrameworkCore;
 namespace Framework.Data;
 
 /// <summary>
-/// Contexte de base du framework : conventions génériques (clé = Id, audit
-/// horodatée à chaque SaveChanges, suppression logique transparente) et
-/// découverte des IEntityTypeConfiguration de l'assembly du contexte.
+/// Contexte de base du framework : conventions génériques de modèle (clé = Id,
+/// colonnes d'audit bornées, suppression logique transparente) et découverte
+/// des IEntityTypeConfiguration de l'assembly du contexte. L'écriture de l'audit
+/// n'est pas ici : elle appartient à <see cref="AuditSaveChangesInterceptor"/>.
 /// Un projet dérivé hérite de cette classe et y ajoute ses DbSet.
 /// </summary>
 public class FrameworkDbContext : DbContext
 {
+    /// <summary>Taille d'un identifiant de connexion tracé : la colonne de « qui ».</summary>
+    public const int TailleColonneAuteur = 64;
+
     public DbSet<CompteEntity> Comptes => Set<CompteEntity>();
 
     /// <summary>Table de démonstration du CRUD : à supprimer avec l'écran « Exemples ».</summary>
@@ -37,6 +41,7 @@ public class FrameworkDbContext : DbContext
         modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
 
         AppliquerFiltresSuppressionLogique(modelBuilder);
+        BornersColonnesAuteur(modelBuilder);
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -67,42 +72,33 @@ public class FrameworkDbContext : DbContext
         }
     }
 
-    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    /// <summary>
+    /// Les colonnes d'auteur existent par la convention, pas par la déclaration :
+    /// une entité d'un produit dérivé qui hérite d'EntityBase les reçoit déjà
+    /// bornées, sans avoir à répéter trois lignes de configuration.
+    /// </summary>
+    private static void BornersColonnesAuteur(ModelBuilder modelBuilder)
     {
-        AppliquerConventions();
-        return base.SaveChanges(acceptAllChangesOnSuccess);
-    }
-
-    public override Task<int> SaveChangesAsync(
-        bool acceptAllChangesOnSuccess,
-        CancellationToken cancellationToken = default)
-    {
-        AppliquerConventions();
-        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
-    }
-
-    /// <summary>Horodatage d'audit et conversion des DELETE en suppression logique.</summary>
-    private void AppliquerConventions()
-    {
-        var maintenant = DateTime.UtcNow;
-
-        foreach (var entry in ChangeTracker.Entries())
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
-            switch (entry.State)
+            if (!typeof(IAuditableEntity).IsAssignableFrom(entityType.ClrType))
             {
-                case EntityState.Added when entry.Entity is IAuditableEntity ajoutee:
-                    ajoutee.CreatedAt = maintenant;
-                    break;
+                continue;
+            }
 
-                case EntityState.Modified when entry.Entity is IAuditableEntity modifiee:
-                    modifiee.UpdatedAt = maintenant;
-                    break;
+            var entityBuilder = modelBuilder.Entity(entityType.ClrType);
 
-                case EntityState.Deleted when entry.Entity is ISoftDeletableEntity supprimee:
-                    entry.State = EntityState.Modified;
-                    supprimee.IsDeleted = true;
-                    supprimee.DeletedAt = maintenant;
-                    break;
+            foreach (var propriete in new[]
+                     {
+                         nameof(IAuditableEntity.CreatedBy),
+                         nameof(IAuditableEntity.UpdatedBy),
+                         nameof(ISoftDeletableEntity.DeletedBy),
+                     })
+            {
+                if (entityType.FindProperty(propriete) is not null)
+                {
+                    entityBuilder.Property(propriete).HasMaxLength(TailleColonneAuteur);
+                }
             }
         }
     }

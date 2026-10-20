@@ -43,6 +43,8 @@ public static class FrameworkDataServiceExtensions
         // Surcharge (provider, builder) : le resolver est résolu depuis le
         // conteneur définitif, jamais via un BuildServiceProvider temporaire
         // qui dupliquerait les singletons.
+        services.AddSingleton<AuditSaveChangesInterceptor>();
+
         services.AddDbContextFactory<TContext>((provider, builder) =>
         {
             var connectionString = provider
@@ -52,6 +54,11 @@ public static class FrameworkDataServiceExtensions
             builder.UseNpgsql(connectionString, npgsql => npgsql
                 .EnableRetryOnFailure(3, TimeSpan.FromSeconds(2), null)
                 .UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+
+            // Une écriture sans auteur n'est pas une écriture traçable : l'audit
+            // est posé sur TOUTES les fabriques de contexte, y compris celles
+            // d'un produit dérivé. Exige IHorloge (apporté par AddFrameworkCommon).
+            builder.AddInterceptors(provider.GetRequiredService<AuditSaveChangesInterceptor>());
         });
 
         services.AddTransient<IUnitOfWork, UnitOfWork>();

@@ -25,7 +25,13 @@ internal sealed class FakeSession : IAuthService
 
     public void SeConnecter(string role)
     {
-        CurrentUser = new AppUser(Guid.NewGuid(), "agent.test", "Agent Test", role, true);
+        SeConnecter(role, "agent.test");
+    }
+
+    /// <summary>Même session, mais un autre titulaire : l'audit trace le nom, pas le rôle.</summary>
+    public void SeConnecter(string role, string pseudo)
+    {
+        CurrentUser = new AppUser(Guid.NewGuid(), pseudo, "Agent Test", role, true);
         AuthenticationStateChanged?.Invoke(this, CurrentUser);
     }
 

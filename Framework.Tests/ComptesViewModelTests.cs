@@ -30,6 +30,9 @@ public sealed class ComptesViewModelTests : IDisposable
     {
         _options = new DbContextOptionsBuilder<FrameworkDbContext>()
             .UseInMemoryDatabase($"framework-comptes-{Guid.NewGuid():N}")
+            // L'audit n'est plus dans le contexte : un poste le déclare via
+            // AddFrameworkData, un test le déclare ici.
+            .AddInterceptors(new AuditSaveChangesInterceptor(_session, new FakeHorloge()))
             .Options;
 
         var services = new ServiceCollection();
