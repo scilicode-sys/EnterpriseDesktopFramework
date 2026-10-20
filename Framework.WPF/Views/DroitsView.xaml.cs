@@ -10,11 +10,11 @@ public partial class DroitsView : UserControl
     {
         InitializeComponent();
 
-        Loaded += (sender, e) =>
+        Loaded += async (sender, e) =>
         {
             if (DataContext is DroitsViewModel droits)
             {
-                droits.Charger();
+                await droits.ChargerAsync();
             }
         };
     }

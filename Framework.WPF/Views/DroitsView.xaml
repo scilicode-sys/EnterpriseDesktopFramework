@@ -21,6 +21,11 @@
                     Style="{StaticResource BoutonDiscret}" HorizontalAlignment="Left"
                     Margin="0,14,0,0" />
 
+            <TextBlock Text="{Binding NoteComptes}" FontSize="11" TextWrapping="Wrap"
+                       Margin="0,8,0,0" MaxWidth="760" HorizontalAlignment="Left"
+                       Foreground="{DynamicResource Brush.TextSecondaire}"
+                       Visibility="{Binding EstNoteVisible, Converter={StaticResource BooleenVersVisibilite}}" />
+
             <ItemsControl ItemsSource="{Binding Roles}" Margin="0,18,0,0">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -49,6 +54,11 @@
                                 <TextBlock FontSize="11" Margin="0,8,0,0" TextWrapping="Wrap"
                                            Foreground="{DynamicResource Brush.Text}">
                                     <Run Text="Hérite de : " /><Run Text="{Binding HeriteDe}" />
+                                </TextBlock>
+
+                                <TextBlock FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource Brush.Text}">
+                                    <Run Text="Porté par : " /><Run Text="{Binding Porteurs}" />
                                 </TextBlock>
 
                                 <TextBlock Text="{Binding Resume}" FontSize="11" TextWrapping="Wrap"
