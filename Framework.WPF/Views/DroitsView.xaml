@@ -53,12 +53,15 @@
 
                                 <TextBlock FontSize="11" Margin="0,8,0,0" TextWrapping="Wrap"
                                            Foreground="{DynamicResource Brush.Text}">
-                                    <Run Text="Hérite de : " /><Run Text="{Binding HeriteDe}" />
+                                    <Run Text="Hérite de : " /><Run Text="{Binding HeriteDe, Mode=OneWay}" />
                                 </TextBlock>
 
                                 <TextBlock FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"
                                            Foreground="{DynamicResource Brush.Text}">
-                                    <Run Text="Porté par : " /><Run Text="{Binding Porteurs}" />
+                                    <!-- Run.Text se lie en TwoWay par défaut : sur une
+                                         propriété calculée sans setter, l'écran crashe au
+                                         rendu, build vert compris. -->
+                                    <Run Text="Porté par : " /><Run Text="{Binding Porteurs, Mode=OneWay}" />
                                 </TextBlock>
 
                                 <TextBlock Text="{Binding Resume}" FontSize="11" TextWrapping="Wrap"
