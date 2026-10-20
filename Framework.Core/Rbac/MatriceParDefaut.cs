@@ -31,7 +31,7 @@ public static class MatriceParDefaut
             Droits.ParametresConsulter,
         }, new[] { Lecteur })
         {
-            Description = "Travaille sur les données du quotidien, ne touche ni comptes ni paramètres.",
+            Description = "Travaille sur les données du quotidien : il consulte les comptes et les réglages, il ne les gère pas.",
         },
 
         new RoleDefini(Lecteur, "Lecteur", new[]

@@ -261,7 +261,7 @@ public partial class ComptesViewModel : ObservableObject, IRecipient<ExternalEnt
 
             if (EstLeCompteCourant(cible.Id))
             {
-                MessageErreur = "Impossible d'inactiver le compte dont ce poste tient la session : "
+                MessageErreur = "Impossible de désactiver le compte dont ce poste tient la session : "
                     + "plus aucun écran ne lui serait accessible, et seul SQL pourrait le réactiver.";
                 return;
             }

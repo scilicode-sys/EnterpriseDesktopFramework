@@ -14,7 +14,7 @@ namespace Framework.Tests;
 
 /// <summary>
 /// Écran « Comptes » (P1 / EF-11) : créer un compte sans SQL, changer un rôle,
-/// inactiver, dégeler, supprimer logiquement — et les trois gardes qui empêchent
+/// désactiver, dégeler, supprimer logiquement — et les trois gardes qui empêchent
 /// l'écran de verrouiller le déploiement (propre rôle, propre compte, rôle hors
 /// matrice). EF InMemory suffit, comme pour les autres écrans.
 /// </summary>
