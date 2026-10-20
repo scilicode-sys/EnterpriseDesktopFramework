@@ -57,28 +57,44 @@ public class ShellViewModelTests
     }
 
     [Fact]
-    public void Administrateur_LesTroisÉcransSousLesMains()
+    public void Administrateur_LesQuatreÉcransSousLesMains()
     {
         var (shell, session, _) = creer();
 
         session.SeConnecter(MatriceParDefaut.Administrateur);
 
         Assert.Equal(
-            new[] { "Tableau de bord", "Exemples", "Rôles et permissions" },
+            new[] { "Tableau de bord", "Exemples", "Comptes", "Rôles et permissions" },
             shell.Items.Select(i => i.Libelle).ToArray());
         Assert.Equal("Agent Test", shell.NomUtilisateur);
         Assert.Equal(MatriceParDefaut.Administrateur, shell.RoleUtilisateur);
     }
 
     [Fact]
-    public void Utilisateur_LesTroisÉcransAussiCarIlHériteDeLecteur()
+    public void Utilisateur_LesQuatreÉcransAussiCarIlHériteDeLecteur()
     {
         var (shell, session, _) = creer();
 
         session.SeConnecter(MatriceParDefaut.Utilisateur);
 
-        // Utilisateur tient exemples.consulter et, par héritage de Lecteur, droits.consulter.
-        Assert.Equal(3, shell.Items.Count);
+        // Utilisateur tient exemples.consulter, comptes.consulter et, par héritage
+        // de Lecteur, droits.consulter. Il voit l'écran Comptes sans pouvoir y écrire.
+        Assert.Equal(4, shell.Items.Count);
+        Assert.Contains(shell.Items, i => i.Cible == typeof(ComptesViewModel));
+    }
+
+    [Fact]
+    public void Lecteur_ÉcranComptesHorsDeSaPortée()
+    {
+        var (shell, session, _) = creer();
+
+        session.SeConnecter(MatriceParDefaut.Lecteur);
+
+        // comptes.consulter n'est accordé qu'à Utilisateur et Administrateur :
+        // l'entrée doit disparaître, pas s'afficher grise ni vide.
+        Assert.DoesNotContain(shell.Items, i => i.Cible == typeof(ComptesViewModel));
+        Assert.Equal(new[] { "Tableau de bord", "Exemples", "Rôles et permissions" },
+            shell.Items.Select(i => i.Libelle).ToArray());
     }
 
     [Fact]
@@ -104,6 +120,7 @@ public class ShellViewModelTests
 
         Assert.Null(shell.Items.Single(i => i.Libelle == "Tableau de bord").PermissionRequise);
         Assert.Equal(Droits.ExemplesConsulter, shell.Items.Single(i => i.Libelle == "Exemples").PermissionRequise);
+        Assert.Equal(Droits.ComptesConsulter, shell.Items.Single(i => i.Libelle == "Comptes").PermissionRequise);
         Assert.Equal(Droits.DroitsConsulter, shell.Items.Single(i => i.Libelle == "Rôles et permissions").PermissionRequise);
     }
 

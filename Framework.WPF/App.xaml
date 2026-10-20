@@ -32,6 +32,10 @@
                 <views:ExempleView />
             </DataTemplate>
 
+            <DataTemplate DataType="{x:Type vm:ComptesViewModel}">
+                <views:ComptesView />
+            </DataTemplate>
+
             <DataTemplate DataType="{x:Type vm:DroitsViewModel}">
                 <views:DroitsView />
             </DataTemplate>

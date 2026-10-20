@@ -76,6 +76,7 @@ public partial class App : Application
                 services.AddTransient<LoginViewModel>();
                 services.AddTransient<DashboardViewModel>();
                 services.AddTransient<ExempleViewModel>();
+                services.AddTransient<ComptesViewModel>();
                 services.AddTransient<DroitsViewModel>();
                 services.AddSingleton<ShellViewModel>();
                 services.AddTransient<ConnectionConfigViewModel>();

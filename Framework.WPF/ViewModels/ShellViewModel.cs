@@ -78,6 +78,7 @@ public partial class ShellViewModel : ObservableObject, IRecipient<ExternalEntit
         {
             new NavigationItem("Tableau de bord", "", typeof(DashboardViewModel)),
             new NavigationItem("Exemples", "", typeof(ExempleViewModel), Droits.ExemplesConsulter),
+            new NavigationItem("Comptes", "", typeof(ComptesViewModel), Droits.ComptesConsulter),
             new NavigationItem("Rôles et permissions", "", typeof(DroitsViewModel), Droits.DroitsConsulter),
         };
 
