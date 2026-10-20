@@ -15,7 +15,7 @@
     <p class="lede">Cinq projets, un sens de dépendance unique, aucune règle métier dans
       le socle. Cette page décrit ce qui existe — pas ce que votre produit va en faire.</p>
     <div class="meta">
-      <span>État du socle&nbsp;: <b>commit d65851a</b> — 19/10/2026</span>
+      <span>État du socle&nbsp;: <b>commit 01a49dd</b> — 20/10/2026</span>
       <span>Solution&nbsp;: <code>Framework.sln</code></span>
       <span>Exécutable produit&nbsp;: <code>FrameworkDemo.exe</code></span>
     </div>
@@ -38,9 +38,9 @@
           Velopack, Sentry, PDF QuestPDF, export CSV.</td></tr>
       <tr><td><code>Framework.WPF</code></td><td>net8.0-windows</td><td>Core, Data, Common</td>
         <td>Composition root et écrans&nbsp;: hôte DI, shell, navigation par ViewModel,
-          thème à chaud, assistant réseau, écran CRUD de référence, écran des droits.</td></tr>
+          thème à chaud, assistant réseau, écran CRUD de référence, écran des comptes, écran des droits.</td></tr>
       <tr><td><code>Framework.Tests</code></td><td>net8.0-windows</td><td>les quatre</td>
-        <td>168 tests xUnit, sans base de données réelle (EF InMemory + horloge pilotée).</td></tr>
+        <td>194 tests xUnit, sans base de données réelle (EF InMemory + horloge pilotée).</td></tr>
     </tbody>
   </table>
 
@@ -136,10 +136,15 @@
           sinon. Schéma absent et panne réseau y sont deux messages distincts.</td></tr>
       <tr><td>WPF</td><td><code>ExempleViewModel</code> + <code>ExempleView</code> + <code>ExempleEntity</code></td>
         <td>Écran CRUD <b>de référence</b>, à copier puis à supprimer avec la table <code>Exemples</code>.</td></tr>
+      <tr><td>WPF</td><td><code>ComptesViewModel</code> + <code>ComptesView</code> + <code>CompteLigne</code></td>
+        <td>Écran d'administration des comptes&nbsp;: création avec PBKDF2, rôle borné à la matrice,
+          activation, levée du gel anti-force-brute, suppression logique. Second exemple réel de la mécanique
+          de <code>ExempleViewModel</code> — et le premier à porter des gardes contre son propre usage
+          (on ne se désactive ni ne se rétrograde soi-même).</td></tr>
       <tr><td>WPF</td><td><code>DroitsViewModel</code> + <code>DroitsView</code></td>
         <td>La matrice déroulée, la session marquée, les rôles sans issue signalés.</td></tr>
       <tr><td>CI</td><td><code>.github/workflows/framework-ci.yml</code></td>
-        <td>windows-latest&nbsp;: Release build + 168 tests sur tout push touchant le framework.</td></tr>
+        <td>windows-latest&nbsp;: Release build + 194 tests sur tout push touchant le framework.</td></tr>
     </tbody>
   </table>
 

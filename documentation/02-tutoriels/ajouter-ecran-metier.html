@@ -24,6 +24,14 @@
 
   <nav class="fils"><a href="../index.html">Accueil</a> › 02 · Tutoriels › <b>Ajouter un écran métier</b></nav>
 
+  <div class="encadre note"><span class="t">Le patron a déjà été copié une fois</span>
+    <p>L'écran <b>Comptes</b> (<code>ComptesViewModel</code> / <code>ComptesView</code> / <code>CompteLigne</code>,
+      ajouté en <code>871c7ea</code>) est sorti de ce trajet sans dévier du patron&nbsp;: portée DI par opération,
+      <code>Exiger(…)</code> dans la commande, garde de réentrance, <code>ReactualiserSiNotreTableAsync</code>.
+      Comparer les deux fichiers est la façon la plus rapide de vérifier qu'une copie respecte le patron —
+      et qu'elle y ajoute bien ses gardes métier.</p>
+  </div>
+
   <h2>Le trajet en sept étapes</h2>
 
   <div class="pas"><div class="n">1</div><div class="c">

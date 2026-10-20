@@ -15,14 +15,14 @@ documentation/
 ├── assets/doc.css                    charte commune à toutes les pages
 ├── 01-structure/architecture.html    les 5 projets, le sens des dépendances, les briques
 ├── 02-tutoriels/
-│   ├── demarrage-d-un-poste.html     un poste neuf, de l'assistant au premier compte
+│   ├── demarrage-d-un-poste.html     un poste neuf, puis un second compte et deux postes qui se voient
 │   ├── nouveau-produit.html          Framework → produit métier en 2 h
 │   └── ajouter-ecran-metier.html     copier l'écran CRUD de référence
 ├── 03-plan/
 │   ├── cahier-des-charges.html       périmètre, exigences EF/EN, définition de « terminé »
 │   └── feuille-de-route.html         tours livrés, briques restantes, bloqueurs
 ├── 04-manuel-test/
-│   ├── plan-de-qualification.html    parcours T0 → T6 joués par un exploitant
+│   ├── plan-de-qualification.html    parcours T0 → T7 joués par un exploitant
 │   └── fiche-de-recette.html         registre à remplir (verdict, anomalie, clôture)
 └── 05-qualite/conventions-et-pieges.html  règles permanentes + pièges mesurés
 ```

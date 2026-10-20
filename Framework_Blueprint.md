@@ -67,6 +67,9 @@ copier/renommer →  entités + contexte →   migrations + synchro →  premier
    la `NavigationItem` (avec sa permission) dans `ShellViewModel._tousLesItems`,
    le `DataTemplate` dans `App.xaml`, l'enregistrement `AddTransient` du ViewModel
    dans `App.xaml.cs`.
+   *Preuve que le trajet tient* : l'écran **Comptes** (`ComptesViewModel` +
+   `ComptesView` + `CompteLigne`, livré en `871c7ea`) est sorti de cette copie
+   sans dévier du patron, en y ajoutant ses propres gardes métier.
 5. **Droits du produit.** Éditer `Framework.Core/Rbac/MatriceParDefaut.cs` (ou
    mieux : `new MatriceRoles(...)` propre au produit à la composition root) et
    déclarer les permissions dans `Droits` sous la convention `module.verbe`.
@@ -86,7 +89,7 @@ Framework.sln
 ├── Framework.Data      net8.0          EF Core 9 + Npgsql — sans UI
 ├── Framework.Common    net8.0-windows  réglages, chiffrement, licence, Velopack, Sentry, PDF/CSV
 ├── Framework.WPF       net8.0-windows  shell : hôte DI, navigation, thème, écrans
-└── Framework.Tests     net8.0-windows  168 tests xUnit — sans base de données réelle
+└── Framework.Tests     net8.0-windows  194 tests xUnit — sans base de données réelle
 ```
 
 Dépendances toujours dans ce sens : `WPF → Common → Core` et `WPF → Data → Core`.
@@ -127,8 +130,9 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
 | WPF | `ConnectionConfigWindow` | **assistant réseau autonome** : test, création de base, enregistrement — premier écran d'un poste neuf |
 | WPF | `DroitsViewModel` + `DroitsView` | écran « Rôles et permissions » : la matrice déroulée, la session courante marquée, les rôles déclarés qui ne mènent à aucun écran signalés |
 | WPF | `ExempleViewModel` + `ExempleView` | **écran CRUD de référence** : liste filtrable, formulaire, suppression logique, Unit of Work par opération, recharge sur notification d'un autre poste, **boutons grisés par le droit ET par l'état** |
-| Tests | `Framework.Tests` | hachage, chiffrement (fichier + DPAPI), licence/HWID complète, réglages, CSV/PDF, resolver + assistant, `AuthService` (gel inclus) sur EF InMemory, fabrique de conception (migrations), écran CRUD de référence, **matrice RBAC + `AutorisationService` + gates des écrans** |
-| CI | `.github/workflows/framework-ci.yml` | windows-latest : Release build + 168 tests sur tout push touchant le framework |
+| WPF | `ComptesViewModel` + `ComptesView` + `CompteLigne` | **écran de gestion des comptes** (EF-11) : créer un compte, changer un rôle, désactiver, lever un gel — sans SQL. Empreinte de mot de passe jamais remontée à la vue, liste de rôles fermée par la matrice, identifiant dupliqué refusé avant l'index unique, et **impossibilité de verrouiller sa propre session** (rôle, désactivation, suppression du compte courant refusés) |
+| Tests | `Framework.Tests` | hachage, chiffrement (fichier + DPAPI), licence/HWID complète, réglages, CSV/PDF, resolver + assistant, `AuthService` (gel inclus) sur EF InMemory, fabrique de conception (migrations), écran CRUD de référence, **matrice RBAC + `AutorisationService` + gates des écrans** (dont l'écran Comptes : empreinte seule à la création, gardes du compte courant, gel, suppression logique) |
+| CI | `.github/workflows/framework-ci.yml` | windows-latest : Release build + 194 tests sur tout push touchant le framework |
 
 ## 2. Règles permanentes du framework
 
@@ -146,6 +150,11 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
 - **Les droits se déclarent en code** (`MatriceParDefaut` ou la matrice du
   produit) : un rôle lu en base que la matrice ne connaît pas donne zéro droit,
   jamais un droit par défaut.
+- **Un écran ne se verrouille jamais lui-même** : un écran
+  d'administration refuse la désactivation, la suppression et le changement de
+  rôle du compte qui tient la session courante. Le garde se lit sur
+  `IAuthService.CurrentUser` à l'exécution, jamais sur la ligne affichée —
+  sinon l'exploitant peut scier la branche qui lui donne accès à l'écran.
 
 ## 3. Pièges mesurés, déjà désamorcés
 
@@ -208,6 +217,22 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
   `EnsureCreated` : sans `dotnet ef database update --project Framework.Data`,
   il n'y a ni `Comptes`, ni trigger de synchro — et donc aucun T3 possible.
   L'assistant le dit maintenant à l'enregistrement.
+- **Écrire l'état de fin de commande *avant* le rechargement du `finally`**
+  rend le message invisible. Le patron « recharger dans le `finally` » terminait
+  sur « n lignes affichées » et écrasait « 1 compte désactivé » : le bouton
+  avait bien travaillé, l'écran affirmait le contraire. D'où `resultat` local +
+  `clore(resultat)` appelé **après** le rechargement. Le même aveuglement reste
+  dans `ExempleViewModel`, non corrigé ici parce que sa relecture est reportée
+  par l'exploitant.
+- **Un écran d'administration ne doit pas pouvoir se couper sa propre branche** :
+  sans garde, un Administrateur peut se rétrograder, se désactiver ou se
+  supprimer depuis sa propre session — et perd l'accès à l'écran qui aurait
+  servi à réparer. Les trois gardes sont écrites dans les commandes, pas
+  seulement grisées dans la vue, et lues sur `IAuthService.CurrentUser`.
+- **Doublure d'identifiant à vérifier avant l'index unique** : un `username`
+  déjà pris levait une contrainte PostgreSQL dont la traduction restait
+  générique. `FindAsync(c => c.Username == username)` en excluant sa propre
+  ligne donne une phrase sur laquelle l'exploitant peut agir.
 
 ## 4. Ce que le cadre laisse au produit
 
@@ -222,5 +247,8 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
   (`ExempleViewModel` + `ExempleView` + `ExempleEntity` + sa ligne dans la
   migration `Initial`). Le produit le copie, le renomme, puis supprime les
   trois fichiers et la table `Exemples` dès sa première vraie table métier.
+  L'écran **Comptes** n'entre pas dans ce nettoyage : il appartient au socle et
+  garde les clés `comptes.consulter` / `comptes.gerer` — le produit décide qui
+  les tient, pas s'il les supprime.
 - **Secret de licence** : l'éditeur du produit tient SA clé HMAC et génère les
   codes d'activation avec `OfflineLicenseEngine.Emettre` (outil distributeur).

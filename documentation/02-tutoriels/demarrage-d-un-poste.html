@@ -17,7 +17,8 @@
     <div class="meta">
       <span>Durée&nbsp;: <b>10 min</b>, base déjà créée par l'assistant</span>
       <span>Prérequis&nbsp;: <b>PostgreSQL 14+ joignable</b>, .NET 8 Desktop Runtime</span>
-      <span>Renvois&nbsp;: <a href="../04-manuel-test/plan-de-qualification.html">T0 et T1 du plan de qualification</a></span>
+      <span>Renvois&nbsp;: <a href="../04-manuel-test/plan-de-qualification.html">T0, T1 et T7 du plan de qualification</a></span>
+      <span>Aligné sur&nbsp;: <b>commit 01a49dd</b></span>
     </div>
   </header>
 
@@ -96,8 +97,48 @@ SELECT tgname FROM pg_trigger WHERE tgname LIKE 'TX_sync%';
     <div class="encadre attendu"><span class="t">Attendu</span> Le rôle de ce premier compte est
     <b>Administrateur, forcé</b> dans le code — aucun choix n'est proposé, volontairement.
     À la connexion&nbsp;: votre nom et « Administrateur » dans la barre latérale, et les
-    <b>trois entrées</b> (Tableau de bord · Exemples · Rôles et permissions).</div>
+    <b>quatre entrées</b> (Tableau de bord · Exemples · <b>Comptes</b> · Rôles et permissions). À ce stade
+    le poste est seul au monde&nbsp;: la suite dit comment lui donner des collègues.</div>
   </div></div>
+
+  <h2>Donner des collègues à ce poste</h2>
+  <p>Cinq lignes exécutées à l'écran, sans SQL&nbsp;: c'est l'écran <b>Comptes</b> (livré en
+    <code>871c7ea</code>) qui remplace la requête d'insertion. Le premier compte — Administrateur forcé —
+    est seul tant que personne n'a créé le deuxième.</p>
+  <table>
+    <thead><tr><th style="width:16%">Qui</th><th style="width:44%">Faire</th><th>Observer</th></tr></thead>
+    <tbody>
+      <tr><td><span class="qui qui-vous">Exploitant</span></td>
+        <td>Poste déjà connecté&nbsp;: entrée <b>Comptes</b> → bouton <b>Nouveau compte</b> →
+          identifiant, nom complet, rôle, mot de passe (8 caractères minimum) + confirmation →
+          <b>Enregistrer</b></td>
+        <td>Le rôle se choisit dans la liste fermée de la matrice&nbsp;; la ligne apparaît avec la mention
+          de l'opération en pied de liste.</td></tr>
+      <tr><td><span class="qui qui-vous">Exploitant</span></td>
+        <td>Sur un second poste (ou une seconde instance de l'exécutable)&nbsp;: assistant réseau, mêmes
+          hôte / base / <code>SyncChannel</code> que le premier poste</td>
+        <td>Le poste demande une connexion&nbsp;: les comptes existent déjà, le titre reste
+          «&nbsp;Connexion&nbsp;» (l'amorce du premier compte est fermée).</td></tr>
+      <tr><td><span class="qui qui-poste">Poste</span></td>
+        <td>Se connecter avec le compte créé à l'étape précédente, rôle <b>Lecteur</b> par exemple</td>
+        <td>La barre latérale de ce poste ne montre pas les mêmes entrées que celle de l'Administrateur&nbsp;:
+          le rôle est lu à la connexion, pas copié d'un poste à l'autre.</td></tr>
+      <tr><td><span class="qui qui-poste">Poste</span></td>
+        <td>Sur le premier poste, écrire une ligne (écran Exemples ou Comptes)</td>
+        <td>Le second poste recharge tout seul&nbsp;: le trigger <code>TX_sync_*</code> émet une
+          notification que la barre latérale consomme. Deux postes sur des <code>SyncChannel</code>
+          différents ne se voient jamais — c'est le premier réflexe à vérifier.</td></tr>
+      <tr><td><span class="qui qui-vous">Exploitant</span></td>
+        <td>Changer le rôle d'un compte <b>ouvert sur un autre poste</b>, puis reconnecter ce poste</td>
+        <td>La session en cours garde son rôle jusqu'à la <b>reconnexion</b>&nbsp;: c'est le comportement
+          voulu, pas un défaut de synchro.</td></tr>
+    </tbody>
+  </table>
+  <div class="encadre note"><span class="t">Ce que l'écran Comptes ne fera jamais</span>
+    Il n'affiche pas et n'affichera pas les empreintes de mot de passe, il ne peut pas désactiver, supprimer
+    ou changer le rôle du compte qui tient la session courante, et un mot de passe laissé vide en édition
+    <b>conserve</b> l'empreinte existante. Lever un gel de connexion se fait par le bouton dédié, plus
+    besoin de <code>UPDATE&nbsp;"Comptes"…</code>.</div>
 
   <h2>Et si ça ne démarre pas</h2>
   <table>
@@ -129,8 +170,9 @@ SELECT tgname FROM pg_trigger WHERE tgname LIKE 'TX_sync%';
         <td>Renommer en lettres/minuscules/tirets bas, réessayer</td></tr>
       <tr><td>Compte gelé après trois échecs</td>
         <td>Anti-force-brute normal&nbsp;: 60 secondes, horloge du cadre</td>
-        <td>Attendre, ou <span class="qui qui-vous">Exploitant</span> en SQL&nbsp;:
-          <code>UPDATE "Comptes" SET "EchecsConsecutifs"=0, "GelJusqua"=NULL;</code></td></tr>
+        <td>Attendre, ou <span class="qui qui-vous">Exploitant</span> poste ouvert en Administrateur&nbsp;:
+          écran <b>Comptes</b>, sélectionner la ligne puis <b>Lever le gel de connexion</b>&nbsp;— la SQL
+          <code>UPDATE "Comptes" SET "EchecsConsecutifs"=0, "GelJusqua"=NULL;</code> n'est plus nécessaire</td></tr>
       <tr><td>Le poste affiche « 0 ligne » alors qu'un autre voit des données</td>
         <td>Trigger de synchro absent, ou <code>SyncChannel</code> différent entre postes</td>
         <td>Étape 6 ci-dessus&nbsp;; puis <a href="../05-qualite/conventions-et-pieges.html">pièges mesurés</a></td></tr>

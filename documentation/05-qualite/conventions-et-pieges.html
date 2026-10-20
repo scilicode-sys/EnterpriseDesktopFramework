@@ -17,14 +17,14 @@
       exact, et la correction tenue.</p>
     <div class="meta">
       <span>Source&nbsp;: <code>Framework_Blueprint.md</code> § 2 et § 3</span>
-      <span>Aligné sur&nbsp;: <b>commit d65851a</b></span>
+      <span>Aligné sur&nbsp;: <b>commit 01a49dd</b></span>
       <span>Règle&nbsp;: une page HTML qui diverge du blueprint = blueprint régénéré</span>
     </div>
   </header>
 
   <nav class="fils"><a href="../index.html">Accueil</a> › 05 · Qualité › <b>Conventions et pièges</b></nav>
 
-  <h2>1 · Les sept règles permanentes</h2>
+  <h2>1 · Les huit règles permanentes</h2>
   <table>
     <thead><tr><th style="width:32%">Règle</th><th>Pourquoi elle tient lieu de loi</th></tr></thead>
     <tbody>
@@ -50,6 +50,10 @@
       <tr><td><b>Un poste non installé sous Velopack n'est pas une anomalie</b></td>
         <td>Le wrapper rend <code>null</code>, le poste tourne&nbsp;; l'application des mises à jour se fait
           <b>uniquement</b> en fermeture.</td></tr>
+      <tr><td><b>Un écran ne se verrouille jamais lui-même</b></td>
+        <td>L'administrateur ne change pas son propre rôle, ne se désactive pas, ne se supprime pas&nbsp;:
+          la matrice ne lui laisserait plus ouvrir l'écran, et le seul retour serait une requête SQL sur une
+          table que cet écran sait pourtant tenir.</td></tr>
     </tbody>
   </table>
 
@@ -143,6 +147,19 @@
         <td>Le cadre ne fait jamais <code>EnsureCreated</code>. L'assistant le dit à l'enregistrement, et
           l'étape 5 du <a href="../02-tutoriels/demarrage-d-un-poste.html">démarrage d'un poste</a> reste la
           seule source des tables.</td></tr>
+      <tr><td>Écrire l'état de fin de commande <em>avant</em> le rechargement du <code>finally</code></td>
+        <td>Le poste n'affiche plus que «&nbsp;3 comptes affichés&nbsp;»&nbsp;: l'exploitant vient de créer
+          un compte et l'écran ne lui en dit pas plus. Reproduit sur l'écran Comptes, alors que la mécanique
+          était censée venir de l'écran de référence</td>
+        <td>La commande garde son message dans une variable locale et le rend <b>après</b> le rechargement
+          (<code>clore(resultat)</code>). Le test <code>Etat_GardeLaTraceDeLOpérationAprèsLeRechargement</code>
+          l'exige&nbsp;; <code>ExempleViewModel</code> porte le même aveuglement, non corrigé ici parce que
+          sa relecture est reportée par l'exploitant.</td></tr>
+      <tr><td>Donner à un écran d'administration le pouvoir de se couper sa propre branche</td>
+        <td>Rôle changé sur soi-même, ou propre compte désactivé&nbsp;: la barre latérale se vide, l'amorce
+          du premier compte est fermée, et la remise en état ne se fait plus qu'en SQL</td>
+        <td>Trois gardes nommées à l'écran (propre rôle, propre inactivation, propre suppression), chacune
+          testée. Un refus qui explique ce qu'il protège vaut mieux qu'un bouton absent.</td></tr>
     </tbody>
   </table>
 

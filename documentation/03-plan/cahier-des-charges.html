@@ -17,7 +17,7 @@
       chaque tour de chantier.</p>
     <div class="meta">
       <span>Version&nbsp;: <b>1.0</b></span>
-      <span>Aligné sur&nbsp;: <b>commit d65851a</b> (19/10/2026)</span>
+      <span>Aligné sur&nbsp;: <b>commit 01a49dd</b> (20/10/2026)</span>
       <span>Statut&nbsp;: <span class="statut en-cours">vivant</span></span>
     </div>
   </header>
@@ -116,9 +116,11 @@
       <tr><td>EF-10</td><td>Export CSV et rapport PDF</td><td><span class="statut livre">livré</span></td>
         <td>RFC 4180, point-virgule + BOM&nbsp;; PDF A4 ouvert et lisible.</td></tr>
       <tr><td>EF-11</td><td>Écran de gestion des comptes (création, rôle, activation)</td>
-        <td><span class="statut a-faire">à faire</span></td>
+        <td><span class="statut livre">livré</span></td>
         <td>Un Administrateur crée un Lecteur <b>sans SQL</b>&nbsp;; la sidebar d'un poste ouvert
-          suit le changement à la reconnexion.</td></tr>
+          suit le changement à la reconnexion. Livré en <code>871c7ea</code> avec les trois gardes
+          anti-verrouillage (propre rôle, propre inactivation, propre suppression) et la levée du gel
+          anti-force-brute depuis l'interface. Recette&nbsp;: <a href="../04-manuel-test/plan-de-qualification.html#t7">T7</a>.</td></tr>
       <tr><td>EF-12</td><td>Écran paramétrage du poste (thème, accent, canal de synchro, licence)</td>
         <td><span class="statut a-faire">à faire</span></td>
         <td>Gardé par <code>parametres.gerer</code>&nbsp;; aucune modification sans redémarrage
@@ -133,7 +135,7 @@
       <tr><td>EN-01</td><td>Build Release à 0 erreur <b>et</b> 0 avertissement</td>
         <td><span class="qui qui-agent">Agent</span> <code>dotnet build Framework.sln -c Release</code> avant chaque commit.</td></tr>
       <tr><td>EN-02</td><td>Suite automatique 100&nbsp;% verte, sans base réelle</td>
-        <td><span class="qui qui-agent">Agent</span> <code>dotnet test</code>&nbsp;; 168 tests à ce jour, EF InMemory
+        <td><span class="qui qui-agent">Agent</span> <code>dotnet test</code>&nbsp;; 194 tests à ce jour, EF InMemory
           et horloge pilotée uniquement.</td></tr>
       <tr><td>EN-03</td><td>Aucun secret en dur, aucun réglage local committé</td>
         <td><code>.gitignore</code> exclut <code>settings.json</code>, <code>licence.*</code>, <code>bin/</code>,
@@ -190,11 +192,12 @@
   <table>
     <thead><tr><th style="width:34%">Risque</th><th style="width:14%">Gravité</th><th>Mesure prise ou proposée</th></tr></thead>
     <tbody>
-      <tr><td>Aucun écran de gestion des comptes&nbsp;: les rôles se posent en SQL</td>
-        <td><span class="statut en-cours">moyenne</span></td><td>EF-11&nbsp;; en attendant, la recette T4
-          donne la requête exacte.</td></tr>
+      <tr><td>L'écran Comptes n'a jamais été joué&nbsp;: sa dette est une recette, pas du SQL</td>
+        <td><span class="statut en-cours">faible</span></td><td>EF-11 livré en <code>871c7ea</code> (suite portée de 168 à 194)
+          ; reste à jouer <a href="../04-manuel-test/plan-de-qualification.html#t7">T7</a>. Tant que T4/T7
+          n'ont pas de verdict, la création de compte en SQL reste la porte de secours documentée.</td></tr>
       <tr><td>Le rendu WPF n'est jamais prouvé par la suite automatique</td>
-        <td><span class="statut en-cours">moyenne</span></td><td>Plan de qualification T0→T6 joué par
+        <td><span class="statut en-cours">moyenne</span></td><td>Plan de qualification T0→T7 joué par
           l'exploitant&nbsp;; <a href="../04-manuel-test/fiche-de-recette.html">fiche de recette</a> comme preuve.</td></tr>
       <tr><td>Services PDF/CSV/licence non consommés par un écran</td>
         <td><span class="statut a-faire">faible</span></td><td>Leur premier branchement se fait sur la

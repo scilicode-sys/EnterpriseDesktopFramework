@@ -11,13 +11,13 @@
 
   <header class="page-head">
     <div class="rubrique">04 · Manuel de test</div>
-    <h1>Plan de qualification — les sept parcours exploitant</h1>
+    <h1>Plan de qualification — les huit parcours exploitant</h1>
     <p class="lede">La suite automatique prouve les décisions (droits, calculs, cycles de vie).
       Elle ne prouve <b>pas</b> le rendu, les vrais <code>IsEnabled</code>, les glyphes Segoe MDL2,
-      ni le LISTEN/NOTIFY sur un vrai serveur. Ces sept parcours sont la seule preuve de ce dernier
+      ni le LISTEN/NOTIFY sur un vrai serveur. Ces huit parcours sont la seule preuve de ce dernier
       tiers — et ils ne peuvent être joués que par un humain devant un poste.</p>
     <div class="meta">
-      <span>Durée totale&nbsp;: <b>≈ 70 min</b> (dont 25 min pour T3–T4)</span>
+      <span>Durée totale&nbsp;: <b>≈ 85 min</b> (dont 25 min pour T3–T4 et 15 min pour T7)</span>
       <span>Postes requis&nbsp;: <b>1</b>, et <b>2</b> pour T3</span>
       <span>Rendu attendu&nbsp;: verdicts dans la <a href="fiche-de-recette.html">fiche de recette</a></span>
     </div>
@@ -43,6 +43,9 @@
         <td>Lisibilité de la matrice, badge de session courante, phrases de l'écran.</td></tr>
       <tr><td>T6</td><td>Transverse&nbsp;: thème, alertes, panne, brute-force</td><td>Exploitant</td>
         <td>Lecture en thème sombre, message français sur vraie panne, gel de compte à l'usage.</td></tr>
+      <tr><td>T7</td><td>Écran Comptes</td><td>Exploitant</td>
+        <td>Un second compte créé <b>sans SQL</b>, un rôle changé à l'écran, une inactivation qui tient,
+          le gel levé depuis l'interface, les trois gardes anti-verrouillage.</td></tr>
     </tbody>
   </table>
 
@@ -100,7 +103,7 @@
             <td>Le titre bascule en <b>création du premier compte</b> et demande nom complet + mot de passe.</td></tr>
           <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Créer le compte, se connecter</td>
             <td>Rôle <b>Administrateur</b> sans qu'on ait eu le choix&nbsp;; la barre latérale montre le nom, le rôle,
-              et les trois entrées.</td></tr>
+              et les <b>quatre entrées</b>&nbsp;: Tableau de bord · Exemples · Comptes · Rôles et permissions.</td></tr>
           <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Se reconnecter une deuxième fois</td>
             <td>L'amorce est <b>fermée</b>&nbsp;: plus de création de premier compte, connexion classique.</td></tr>
           <tr><td><span class="qui qui-vous">Exploitant</span></td><td><b>Fermer la session</b></td>
@@ -181,25 +184,24 @@
   <div class="fiche">
     <h2>T4 · Droits à l'écran — le parcours qui compte</h2>
     <div class="corps">
-      <div class="encadre attention"><span class="t">Pourquoi du SQL</span>
-        <p>Aucun écran de gestion des comptes n'existe à ce jour (brique <b>P1</b> de la feuille de route)&nbsp;:
-          c'est donc vous, en support, qui posez les rôles en base. Le mot de passe reste le même&nbsp;:
-          on duplique la colonne <code>"PasswordHash"</code>.</p></div>
+      <div class="encadre note"><span class="t">Pourquoi il reste une ligne de SQL</span>
+        <p>Depuis <b>P1</b> (<code>871c7ea</code>), les rôles se posent à l'écran — voir
+          <a href="#t7">T7</a>. Il reste <b>une</b> écriture SQL dans ce parcours, et c'est voulu&nbsp;:
+          seul SQL sait mettre un compte sur un rôle que la matrice ne connaît pas, ce qui est exactement
+          le défaut sûr que T4 doit prouver.</p></div>
       <table>
         <thead><tr><th style="width:14%">Qui</th><th style="width:43%">Étape</th><th>Attendu</th></tr></thead>
         <tbody>
           <tr><td><span class="qui qui-vous">Exploitant</span></td>
-            <td>Créer un compte lecture&nbsp;:
-<pre style="margin:6px 0 0"><code>INSERT INTO "Comptes"
- ("Id","Username","NomComplet","Role","PasswordHash",
-  "Actif","EchecsConsecutifs","CreatedAt","IsDeleted")
-SELECT gen_random_uuid(),'lecture','Poste accueil','Lecteur',
-       "PasswordHash",true,0,now(),false
-FROM "Comptes" WHERE "Username"='votre_admin';</code></pre></td>
-            <td>Un compte <b>Lecteur</b> avec le même mot de passe que l'admin.</td></tr>
+            <td>Écran <b>Comptes</b> → «&nbsp;Nouveau compte&nbsp;»&nbsp;: identifiant <code>lecture</code>,
+              nom «&nbsp;Poste accueil&nbsp;», rôle <b>Lecteur</b>, un mot de passe saisi deux fois</td>
+            <td>La ligne apparaît en liste, le formulaire se vide, l'état du bas dit
+              «&nbsp;<code>lecture</code> créé avec le rôle «&nbsp;Lecteur&nbsp;»&nbsp;».</td></tr>
           <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Se déconnecter, se reconnecter en <code>lecture</code>, ouvrir Exemples</td>
-            <td>Les trois entrées restent (Lecteur tient <code>exemples.consulter</code> et <code>droits.consulter</code>),
-              mais <b>«&nbsp;Enregistrer&nbsp;» et «&nbsp;Supprimer la ligne&nbsp;» sont grisés</b>.</td></tr>
+            <td><b>Trois entrées</b> seulement (Tableau de bord · Exemples · Rôles et permissions)&nbsp;: Lecteur
+              tient <code>exemples.consulter</code> et <code>droits.consulter</code> mais <b>pas</b>
+              <code>comptes.consulter</code> — l'entrée Comptes a disparu, elle ne s'affiche pas grise.
+              Sur Exemples, «&nbsp;Enregistrer&nbsp;» et «&nbsp;Supprimer la ligne&nbsp;» sont grisés.</td></tr>
           <tr><td><span class="qui qui-vous">Exploitant</span></td>
             <td>Contourner la vue&nbsp;: sélectionner une ligne, Valider au clavier (Entrée dans le formulaire),
               ou passer par «&nbsp;Retour&nbsp;» après une modification de rôle</td>
@@ -210,16 +212,20 @@ FROM "Comptes" WHERE "Username"='votre_admin';</code></pre></td>
             <td><b>Rôle inconnu de la matrice = zéro droit</b>&nbsp;: plus que «&nbsp;Tableau de bord&nbsp;» dans la barre
               latérale, Exemples injoignable.</td></tr>
           <tr><td><span class="qui qui-vous">Exploitant</span></td>
-            <td>Repasser en <code>'Utilisateur'</code></td>
+            <td>Reconnexion en admin, écran Comptes, sélectionner <code>lecture</code>, rôle
+              <b>Utilisateur</b>, <b>Enregistrer</b> sans retaper de mot de passe, puis reconnexion en <code>lecture</code></td>
             <td>Écriture autorisée sur Exemples, «&nbsp;Rôles et permissions&nbsp;» encore visible —
-              c'est l'<b>héritage de Lecteur</b> qui le prouve à l'écran.</td></tr>
+              c'est l'<b>héritage de Lecteur</b> qui le prouve à l'écran. Le mot de passe n'a pas eu à être
+              resaisi&nbsp;: vide en modification veut dire conservé.</td></tr>
           <tr><td><span class="qui qui-vous">Exploitant</span></td>
             <td>Poste resté ouvert&nbsp;: changer le rôle d'un compte connecté, puis <b>Fermer la session</b> et se reconnecter</td>
             <td>La barre latérale et l'écran rendu suivent la nouvelle session sans redémarrage.</td></tr>
         </tbody>
       </table>
       <div class="encadre note"><span class="t">Ré-armement</span>
-        <p>Compte gelé après trois échecs&nbsp;:
+        <p>Compte gelé après trois échecs&nbsp;: l'écran Comptes a un bouton <b>«&nbsp;Lever le gel de
+          connexion&nbsp;»</b> (T7). Le SQL reste la porte de secours si le poste n'a plus le droit d'ouvrir
+          l'écran&nbsp;:
           <code>UPDATE "Comptes" SET "EchecsConsecutifs"=0, "GelJusqua"=NULL WHERE "Username"='lecture';</code></p></div>
     </div>
   </div>
@@ -279,11 +285,73 @@ FROM "Comptes" WHERE "Username"='votre_admin';</code></pre></td>
     </div>
   </div>
 
+  <!-- ═══════════════ T7 ═══════════════ -->
+  <div class="fiche" id="t7">
+    <h2>T7 · Écran Comptes</h2>
+    <div class="corps">
+      <table>
+        <thead><tr><th style="width:14%">Qui</th><th style="width:43%">Étape</th><th>Attendu</th></tr></thead>
+        <tbody>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Ouvrir «&nbsp;Comptes&nbsp;» en Administrateur</td>
+            <td>Votre propre ligne marquée «&nbsp;<b>(session de ce poste)</b>&nbsp;» dans la colonne Session&nbsp;;
+              aucune colonne ne montre quoi que ce soit qui ressemble à un mot de passe.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td>
+            <td>Nouveau compte&nbsp;: identifiant <code>stage</code>, nom «&nbsp;Stagiaire&nbsp;», rôle
+              <b>Lecteur</b>, mot de passe <code>1234567</code> (7 caractères) confirmé</td>
+            <td>Refus «&nbsp;au moins <b>8 caractères</b>&nbsp;» — la liste des comptes n'a pas bougé.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td>
+            <td>Refaire la même création avec un mot de passe à 8 caractères, puis deux fois le même identifiant</td>
+            <td>Création acceptée la première fois&nbsp;; la seconde dit
+              «&nbsp;L'identifiant «&nbsp;stage&nbsp;» est déjà porté par un compte.&nbsp;»</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td>
+            <td>Sélectionner <code>stage</code>, vider les deux champs mot de passe, <b>Enregistrer</b></td>
+            <td>«&nbsp;<code>stage</code> enregistré.&nbsp;» et, surtout, <b>le compte se connecte toujours</b>
+              avec le mot de passe d'origine&nbsp;: vide = conservé, jamais effacé.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td>
+            <td>Toujours sur <code>stage</code>&nbsp;: <b>Activer&nbsp;/&nbsp;désactiver</b>, puis tenter de se
+              connecter en <code>stage</code> depuis un deuxième poste (ou après fermeture de session)</td>
+            <td>Ligne passée à «&nbsp;Désactivé&nbsp;», et connexion refusée à l'écran par la phrase
+              «&nbsp;Connexion refusée&nbsp;: le compte «&nbsp;stage&nbsp;» est désactivé.&nbsp;» Nouveau clic&nbsp;: la ligne revient à «&nbsp;Actif&nbsp;».</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td>
+            <td><b>Garde 1</b>&nbsp;: sélectionner <em>votre</em> compte, changer son rôle, <b>Enregistrer</b></td>
+            <td>Refus explicite «&nbsp;Vous ne pouvez pas changer votre propre rôle…&nbsp;» et le rôle
+              <b>ne bouge pas</b> en base. Sans ce refus, la barre latérale se videait et seul SQL pouvait
+              ramener l'écran.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td>
+            <td><b>Gardes 2 et 3</b>&nbsp;: sur votre propre compte, <b>Activer&nbsp;/&nbsp;désactiver</b> puis
+              <b>Supprimer le compte</b></td>
+            <td>Deux refus motivés, compte toujours actif et toujours présent après rechargement.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td>
+            <td>Trois mauvais mots de passe sur <code>stage</code> (hors poste, à la connexion), puis ouvrir son
+              compte en admin</td>
+            <td>Colonne «&nbsp;Anti-force-brute&nbsp;»&nbsp;: «&nbsp;<b>Gel jusqu'à HH:mm:ss</b>&nbsp;». Le bouton
+              «&nbsp;Lever le gel de connexion&nbsp;» s'active, l'autre «&nbsp;dégagé de son gel&nbsp;», et
+              <code>stage</code> peut retenter tout de suite.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Filtre&nbsp;: taper <code>stage</code> puis <b>Actualiser</b></td>
+            <td>Une ligne. Le filtre cherche aussi dans le nom complet et le rôle&nbsp;: <code>lecteur</code>
+              sort tous les comptes Lecteur.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Supprimer <code>stage</code>, puis vérifier en pgAdmin</td>
+            <td>Disparaît de la liste&nbsp;; la ligne existe encore en base avec <code>"IsDeleted"=true</code>.
+              <b>Aucune suppression physique</b> de compte, même la vôtre.</td></tr>
+          <tr><td><span class="qui qui-poste">Poste</span></td>
+            <td>Deuxièmes poste ouvert sur Comptes pendant que le premier crée un compte (trigger <code>TX_sync_Comptes</code>, vérifié en T0)</td>
+            <td>La liste du second se recharge seule et dit «&nbsp;un autre poste a modifié la table
+              «&nbsp;Comptes&nbsp;»&nbsp;».</td></tr>
+        </tbody>
+      </table>
+      <div class="encadre danger"><span class="t">Défaut à ne jamais accepter</span>
+        <p>Un compte qui se retrouve désactivé, hors matrice ou supprimé <b>sans</b> que l'écran ait refusé
+          l'opération sur le compte de la session courante&nbsp;: ce serait le déploiement verrouillé par son
+          propre outil d'administration.</p></div>
+    </div>
+  </div>
+
   <h2>Ce que ces parcours ne couvrent pas — volontairement</h2>
   <ul>
     <li><b>Impression / export CSV / rapport PDF</b>&nbsp;: services livrés et testés, mais aucun écran du socle
       ne les consomme encore (brique <b>P3</b>).</li>
-    <li><b>Écran de gestion des comptes</b>&nbsp;: inexistant (brique <b>P1</b>) — d'où le SQL de T4.</li>
+    <li><b>Écran licence du poste et écran de réglages</b>&nbsp;: services livrés et testés, aucun écran ne
+      les expose encore (briques <b>P2</b> et <b>P4</b>).</li>
     <li><b>Mise à jour Velopack</b>&nbsp;: non testable hors installation réelle&nbsp;; le wrapper rend
       <code>null</code> et le poste tourne.</li>
     <li><b>Résolution de noms / sites multiples</b>&nbsp;: hors périmètre du cadre.</li>
