@@ -123,4 +123,22 @@ public class DroitsViewModelTests
         Assert.Equal("Agent Test — rôle « Administrateur »", ecran.SessionCourante);
         Assert.True(ecran.Roles.Single(r => r.Cle == MatriceParDefaut.Administrateur).EstRoleCourant);
     }
+
+    [Fact]
+    public void Recharger_Nouvelle_Roles_QueLaVueEstAvertie()
+    {
+        // Le bouton « Recharger » ne sert à rien si la vue n'apprend pas que la
+        // liste a changé : c'est le repeindre, pas seulement recalculer en mémoire.
+        var session = new FakeSession(MatriceParDefaut.Lecteur);
+        var grille = MatriceParDefaut.Creer();
+        var ecran = new DroitsViewModel(session, grille, new AutorisationService(session, grille));
+        var notifiees = new List<string?>();
+        ecran.PropertyChanged += (_, e) => notifiees.Add(e.PropertyName);
+
+        ecran.Charger();
+        session.SeConnecter(MatriceParDefaut.Administrateur);
+        ecran.RechargerCommand.Execute(null);
+
+        Assert.Contains(nameof(DroitsViewModel.Roles), notifiees);
+    }
 }

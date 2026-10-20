@@ -17,7 +17,12 @@ public partial class DroitsViewModel : ObservableObject
     private readonly IMatriceRoles _matrice;
     private readonly IAutorisationService _autorisation;
 
-    public IReadOnlyList<RoleLigne> Roles { get; private set; } = Array.Empty<RoleLigne>();
+    /// <summary>
+    /// La liste déroulée par le bouton « Recharger » doit se repeindre : sans
+    /// notification, la vue garde la liste déjà affichée et le bouton semble mort.
+    /// </summary>
+    [ObservableProperty]
+    private IReadOnlyList<RoleLigne> _roles = Array.Empty<RoleLigne>();
 
     [ObservableProperty]
     private string _sessionCourante = "(hors session)";
