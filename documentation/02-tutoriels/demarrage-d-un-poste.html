@@ -18,7 +18,7 @@
       <span>Durée&nbsp;: <b>10 min</b>, base déjà créée par l'assistant</span>
       <span>Prérequis&nbsp;: <b>PostgreSQL 14+ joignable</b>, .NET 8 Desktop Runtime</span>
       <span>Renvois&nbsp;: <a href="../04-manuel-test/plan-de-qualification.html">T0, T1 et T7 du plan de qualification</a></span>
-      <span>Aligné sur&nbsp;: <b>commit 01a49dd</b></span>
+      <span>Aligné sur&nbsp;: <b>commit 25bfcb7</b></span>
     </div>
   </header>
 
@@ -139,6 +139,12 @@ SELECT tgname FROM pg_trigger WHERE tgname LIKE 'TX_sync%';
     ou changer le rôle du compte qui tient la session courante, et un mot de passe laissé vide en édition
     <b>conserve</b> l'empreinte existante. Lever un gel de connexion se fait par le bouton dédié, plus
     besoin de <code>UPDATE&nbsp;"Comptes"…</code>.</div>
+  <div class="encadre note"><span class="t">Où voir qui porte chaque rôle</span>
+    L'écran <b>Rôles et permissions</b> déroule la matrice et, sous chaque carte, la ligne
+    «&nbsp;<b>Porté par&nbsp;: 1 compte&nbsp;: stage</b>&nbsp;» (depuis <code>25bfcb7</code>). Le bouton
+    <b>Recharger</b> de cet écran sert à ça&nbsp;: créer un compte sur l'écran Comptes, revenir ici, recharger,
+    et voir le nombre bouger. Un compte désactivé reste compté mais s'affiche
+    «&nbsp;<code>stage</code> (désactivé)&nbsp;».</div>
 
   <h2>Et si ça ne démarre pas</h2>
   <table>

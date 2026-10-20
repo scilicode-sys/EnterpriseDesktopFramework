@@ -17,7 +17,7 @@
       exact, et la correction tenue.</p>
     <div class="meta">
       <span>Source&nbsp;: <code>Framework_Blueprint.md</code> § 2 et § 3</span>
-      <span>Aligné sur&nbsp;: <b>commit 48cbb97</b></span>
+      <span>Aligné sur&nbsp;: <b>commit 25bfcb7</b></span>
       <span>Règle&nbsp;: une page HTML qui diverge du blueprint = blueprint régénéré</span>
     </div>
   </header>
@@ -168,6 +168,12 @@
           <code>PropertyChanged</code> pour que <code>ItemsSource</code> se repeigne. Le test
           <code>Recharger_Nouvelle_Roles_QueLaVueEstAvertie</code> écoute l'événement — un test qui ne compare
           que la valeur laisse passer ce genre de bouton mort.</td></tr>
+      <tr><td>Afficher «&nbsp;0&nbsp;» là où l'écran n'a pas regardé</td>
+        <td>Sur Rôles et permissions, un rôle vide et un rôle dont les comptes sont illisibles ou interdits
+          donnent le même «&nbsp;aucun compte&nbsp;»&nbsp;: l'exploitant conclut que personne ne porte le rôle</td>
+        <td>Le décompte est <code>int?</code>&nbsp;: null = «&nbsp;pas compté&nbsp;», et la note sous le bouton
+          dit pourquoi (<code>comptes.consulter</code> absent, ou serveur injoignable). Un écran de contrôle
+          montre son ignorance, il ne la remplit pas.</td></tr>
     </tbody>
   </table>
 

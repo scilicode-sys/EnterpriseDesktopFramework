@@ -89,7 +89,7 @@ Framework.sln
 ├── Framework.Data      net8.0          EF Core 9 + Npgsql — sans UI
 ├── Framework.Common    net8.0-windows  réglages, chiffrement, licence, Velopack, Sentry, PDF/CSV
 ├── Framework.WPF       net8.0-windows  shell : hôte DI, navigation, thème, écrans
-└── Framework.Tests     net8.0-windows  195 tests xUnit — sans base de données réelle
+└── Framework.Tests     net8.0-windows  200 tests xUnit — sans base de données réelle
 ```
 
 Dépendances toujours dans ce sens : `WPF → Common → Core` et `WPF → Data → Core`.
@@ -128,11 +128,11 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
 | WPF | `App.xaml.cs` | composition root ; Velopack en toute première ligne ; ouverture **automatique de l'assistant réseau** si le poste n'est pas configuré |
 | WPF | `ThemeService` / `NavigationService` / `ShellViewModel` | thème à chaud + accent persisté ; pile de types résolue en DI ; sidebar **filtrée par les droits de la session**, recalculée à chaque changement de personne |
 | WPF | `ConnectionConfigWindow` | **assistant réseau autonome** : test, création de base, enregistrement — premier écran d'un poste neuf |
-| WPF | `DroitsViewModel` + `DroitsView` | écran « Rôles et permissions » : la matrice déroulée, la session courante marquée, les rôles déclarés qui ne mènent à aucun écran signalés. **Il liste des rôles, pas des comptes** — les utilisateurs sont sur l'écran Comptes |
+| WPF | `DroitsViewModel` + `DroitsView` | écran « Rôles et permissions » : la matrice déroulée, la session courante marquée, les rôles déclarés qui ne mènent à aucun écran signalés, et la ligne « Porté par : 1 compte : stage » qui rattache chaque rôle aux comptes du poste sous `comptes.consulter` (refus → « comptes non listés ici », jamais un « 0 » inventé) |
 | WPF | `ExempleViewModel` + `ExempleView` | **écran CRUD de référence** : liste filtrable, formulaire, suppression logique, Unit of Work par opération, recharge sur notification d'un autre poste, **boutons grisés par le droit ET par l'état** |
 | WPF | `ComptesViewModel` + `ComptesView` + `CompteLigne` | **écran de gestion des comptes** (EF-11) : créer un compte, changer un rôle, désactiver, lever un gel — sans SQL. Empreinte de mot de passe jamais remontée à la vue, liste de rôles fermée par la matrice, identifiant dupliqué refusé avant l'index unique, et **impossibilité de verrouiller sa propre session** (rôle, désactivation, suppression du compte courant refusés) |
 | Tests | `Framework.Tests` | hachage, chiffrement (fichier + DPAPI), licence/HWID complète, réglages, CSV/PDF, resolver + assistant, `AuthService` (gel inclus) sur EF InMemory, fabrique de conception (migrations), écran CRUD de référence, **matrice RBAC + `AutorisationService` + gates des écrans** (dont l'écran Comptes : empreinte seule à la création, gardes du compte courant, gel, suppression logique) |
-| CI | `.github/workflows/framework-ci.yml` | windows-latest : Release build + 195 tests sur tout push touchant le framework |
+| CI | `.github/workflows/framework-ci.yml` | windows-latest : Release build + 200 tests sur tout push touchant le framework |
 
 ## 2. Règles permanentes du framework
 
@@ -238,7 +238,9 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
   « Recharger » recalculait la matrice — le test le vérifiait sur la valeur —
   sans jamais notifier, donc `ItemsSource` gardait la liste à l'écran. Depuis,
   la liste est en `[ObservableProperty]` et le test écoute `PropertyChanged`.
-  Comparer une propriété ne prouve pas que l'interface se repeint.
+  Comparer une propriété ne prouve pas que l'interface se repeint. Récidive
+  évitée de la même façon pour `NoteComptes`, qui passe par
+  `OnNoteComptesChanged` plutôt que par un `OnPropertyChanged` manuel.
 
 ## 4. Ce que le cadre laisse au produit
 

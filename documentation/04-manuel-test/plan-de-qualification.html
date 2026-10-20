@@ -249,8 +249,17 @@
           <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Recharger après changement de session</td>
             <td>Le badge «&nbsp;session courante&nbsp;» <b>se déplace à l'écran</b> sur la carte du nouveau rôle.
               Jusqu'à <code>48cbb97</code> le bouton ne repeignait rien (liste non notifiée)&nbsp;; un clic qui ne
-              change rien visuellement est un défaut, pas une inertie normale. Attention&nbsp;: cet écran liste
-              les <b>rôles déclarés</b>, jamais les comptes — les utilisateurs sont sur l'écran Comptes.</td></tr>
+              change rien visuellement est un défaut, pas une inertie normale.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td>
+            <td>Lire la ligne «&nbsp;<b>Porté par</b>&nbsp;» de chaque carte (ajoutée en <code>25bfcb7</code>)</td>
+            <td>«&nbsp;1 compte&nbsp;: stage&nbsp;» sous Lecteur si ton stagiaire existe toujours, «&nbsp;<b>aucun
+              compte ne porte ce rôle</b>&nbsp;» pour les rôles vacants. Un compte désactivé est signalé
+              «&nbsp;<code>stage</code> (désactivé)&nbsp;» — il porte le rôle mais ne peut plus ouvrir de session.
+              Au-delà de six identifiants la liste se tronque («&nbsp;… 2 autres&nbsp;») mais le nombre reste exact.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td>
+            <td>Créer un compte en <b>Lecteur</b> sur l'écran Comptes, puis revenir ici et <b>Recharger</b></td>
+            <td>La carte Lecteur passe à «&nbsp;2 comptes&nbsp;: …&nbsp;» sans redémarrer le poste. C'est le geste
+              que l'exploitant attendait&nbsp;: voir les utilisateurs derrière les rôles.</td></tr>
           <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Bandeau d'avertissement</td>
             <td><b>Vide en matrice par défaut.</b> Il ne doit s'afficher que si un rôle déclaré ne mène à aucun écran
               — cas d'une matrice de produit, donc volontairement non reproductible ici.</td></tr>
