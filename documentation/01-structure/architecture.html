@@ -15,7 +15,7 @@
     <p class="lede">Cinq projets, un sens de dépendance unique, aucune règle métier dans
       le socle. Cette page décrit ce qui existe — pas ce que votre produit va en faire.</p>
     <div class="meta">
-      <span>État du socle&nbsp;: <b>commit 3e60455</b> — 20/10/2026</span>
+      <span>État du socle&nbsp;: <b>commit f004c39</b> — 20/10/2026, l'audit nomme son auteur</span>
       <span>Solution&nbsp;: <code>Framework.sln</code></span>
       <span>Exécutable produit&nbsp;: <code>FrameworkDemo.exe</code></span>
     </div>
@@ -31,7 +31,7 @@
         <td>Contrats et modèles purs&nbsp;: conventions d'entité, Unit of Work, synchro,
           navigation, thème, session, temps, réglages, alertes, licence, RBAC.</td></tr>
       <tr><td><code>Framework.Data</code></td><td>net8.0</td><td>Core</td>
-        <td>EF Core 9 + Npgsql&nbsp;: contexte, dépôts, resolver de connexion, écouteur
+        <td>EF Core 9 + Npgsql&nbsp;: contexte, dépôts, interceptor d'audit, resolver de connexion, écouteur
           LISTEN/NOTIFY, migrations fournies. <b>Aucune référence UI.</b></td></tr>
       <tr><td><code>Framework.Common</code></td><td>net8.0-windows</td><td>Core</td>
         <td>Services Windows&nbsp;: réglages JSON, chiffrement DPAPI, licence/HWID,
@@ -40,7 +40,7 @@
         <td>Composition root et écrans&nbsp;: hôte DI, shell, navigation par ViewModel,
           thème à chaud, assistant réseau, écran CRUD de référence, écran des comptes, écran des droits.</td></tr>
       <tr><td><code>Framework.Tests</code></td><td>net8.0-windows</td><td>les quatre</td>
-        <td>207 tests xUnit, dont sept qui <b>rendent les vraies vues WPF</b> sur un thread STA (XAML réel, gabarits appliqués, mise en page forcée) — le reste sans base de données réelle (EF InMemory + horloge pilotée).</td></tr>
+        <td>213 tests xUnit, dont sept qui <b>rendent les vraies vues WPF</b> sur un thread STA (XAML réel, gabarits appliqués, mise en page forcée) — le reste sans base de données réelle (EF InMemory + horloge pilotée).</td></tr>
     </tbody>
   </table>
 
@@ -72,8 +72,9 @@
     <thead><tr><th style="width:12%">Projet</th><th style="width:28%">Pièce</th><th>Rôle — et ce qu'on en attend</th></tr></thead>
     <tbody>
       <tr><td>Core</td><td><code>IEntity</code>, <code>IAuditableEntity</code>, <code>ISoftDeletableEntity</code>, <code>EntityBase</code></td>
-        <td>Conventions de domaine reconnues par le contexte&nbsp;: <code>Id</code> seule clé,
-          audit écrit au <code>SaveChanges</code>, DELETE converti en <code>IsDeleted</code>.</td></tr>
+        <td>Conventions de domaine reconnues par l'interceptor d'audit&nbsp;: <code>Id</code> seule clé,
+          auteur de chaque écriture (<code>CreatedBy</code>, <code>UpdatedBy</code>, <code>DeletedBy</code>),
+          DELETE devenu radiation datée et nommée.</td></tr>
       <tr><td>Core</td><td><code>IGenericRepository&lt;T&gt;</code>, <code>IUnitOfWork</code></td>
         <td>Frontière d'écriture unique&nbsp;; aucun écran ne parle directement au <code>DbContext</code>.</td></tr>
       <tr><td>Core</td><td><code>SchemaNonInstalleException</code></td>
@@ -90,7 +91,14 @@
       <tr><td>Core</td><td><code>PasswordHasher</code></td>
         <td>PBKDF2-SHA256, 150 000 itérations, comparaison en temps constant.</td></tr>
       <tr><td>Data</td><td><code>FrameworkDbContext</code></td>
-        <td>Filtre global de suppression logique, configurations par assembly, garde du nom de base.</td></tr>
+        <td>Filtre global de suppression logique, configurations par assembly, garde du nom de base,
+          et <b>longueur bornée</b> (<code>varchar(64)</code>) pour les trois colonnes d'auteur de toutes
+          les entités — un produit dérivé n'en configure aucune.</td></tr>
+      <tr><td>Data</td><td><code>AuditSaveChangesInterceptor</code></td>
+        <td><b>Source unique de l'audit</b>&nbsp;: chaque écriture est datée <em>et</em> signée par la session
+          courante, les heures viennent d'<code>IHorloge</code>, une radiation garde son propre auteur sans
+          falsifier la dernière modification. Branché par <code>AddFrameworkData</code>&nbsp;; un contexte monté
+          à la main ne trace plus rien — la traçabilité se déclare.</td></tr>
       <tr><td>Data</td><td><code>UnitOfWork</code>, <code>GenericRepository&lt;T&gt;</code></td>
         <td>Contexte privé par unité de travail&nbsp;; <code>ExecuteInTransactionAsync</code> sous
           <code>CreateExecutionStrategy</code> (obligatoire avec <code>EnableRetryOnFailure</code>).</td></tr>
@@ -100,9 +108,12 @@
       <tr><td>Data</td><td><code>PostgresSyncListener</code>, <code>SyncNotifySql</code></td>
         <td>LISTEN/NOTIFY hors du pool, battement de cœur 30 s, backoff 1 → 30 s, anti-écho par
           <code>Application Name</code> = <code>framework-{MachineName}-{ProcessId}</code>.</td></tr>
-      <tr><td>Data</td><td><code>Design/DesignTimeDbContextFactory</code> + <code>Migrations/Initial</code></td>
-        <td>Migration fournie&nbsp;: tables <code>Comptes</code> et <code>Exemples</code> + trigger de synchro.
-          L'outil EF lit les réglages de l'assistant et refuse sans configuration.</td></tr>
+      <tr><td>Data</td><td><code>Design/DesignTimeDbContextFactory</code> + <code>Migrations/</code></td>
+        <td>Deux migrations fournies&nbsp;: <code>Initial</code> (tables <code>Comptes</code> et
+          <code>Exemples</code> + trigger de synchro) et <code>AuditEnBase</code> (six colonnes d'auteur
+          <code>varchar(64)</code> nulla, purement additive). L'outil EF lit les réglages de l'assistant et
+          refuse sans configuration&nbsp;; la commande qui passe est
+          <code>dotnet ef … --project Framework.Data</code>, <b>sans</b> <code>--startup-project</code>.</td></tr>
       <tr><td>Data</td><td><code>AuthService</code></td>
         <td>Session + anti-force-brute (3 échecs → gel 60 s via <code>IHorloge</code>), amorce du premier compte.
           <b>Résolu en singleton</b> — c'est l'état de session du poste.</td></tr>
@@ -147,7 +158,7 @@
           rôle aux comptes du poste sous <code>comptes.consulter</code>. Sans ce droit, l'écran dit
           «&nbsp;comptes non listés ici&nbsp;» au lieu d'inventer un zéro.</td></tr>
       <tr><td>CI</td><td><code>.github/workflows/framework-ci.yml</code></td>
-        <td>windows-latest&nbsp;: Release build + 207 tests sur tout push touchant le framework.</td></tr>
+        <td>windows-latest&nbsp;: Release build + 213 tests sur tout push touchant le framework.</td></tr>
     </tbody>
   </table>
 
@@ -166,8 +177,10 @@
         <b>par opération</b>, libérée en <code>finally</code>. L'écran ne retient aucune connexion du pool.</div></div>
       <div class="pas"><div class="n">3</div><div class="c">
         <span class="qui qui-poste">Poste</span> <code>IUnitOfWork.Repository&lt;T&gt;()</code> →
-        <code>SaveChangesAsync()</code>&nbsp;: le contexte écrit l'audit (<code>CreatedAt</code>/<code>UpdatedAt</code>)
-        et convertit un <code>Remove</code> en <code>IsDeleted = true</code>.</div></div>
+        <code>SaveChangesAsync()</code>&nbsp;: <code>AuditSaveChangesInterceptor</code> date <em>et</em> signe
+        (<code>CreatedAt</code>/<code>CreatedBy</code>, <code>UpdatedAt</code>/<code>UpdatedBy</code>) et
+        convertit un <code>Remove</code> en <code>IsDeleted = true</code> avec
+        <code>DeletedAt</code>/<code>DeletedBy</code>. L'écran n'écrit jamais ces colonnes.</div></div>
       <div class="pas"><div class="n">4</div><div class="c">
         <span class="qui qui-outil">Base</span> Le trigger <code>TX_sync_{table}</code> appelle
         <code>framework_notify_sync()</code> et émet <code>pg_notify('framework_sync', …)</code>
@@ -206,7 +219,10 @@
     <thead><tr><th style="width:32%">Point d'extension</th><th>File dans le code</th></tr></thead>
     <tbody>
       <tr><td>Contexte et entités</td><td><code>AddFrameworkData&lt;MonProduitDbContext&gt;()</code> ; entités héritées
-        d'<code>EntityBase</code> ; <code>ApplyConfigurationsFromAssembly</code>.</td></tr>
+        d'<code>EntityBase</code> ; <code>ApplyConfigurationsFromAssembly</code>. L'audit d'écriture vient avec la
+        déclaration&nbsp;: aucun écran ne remplit <code>CreatedBy</code>. Un <code>DbContextOptions</code> de test
+        monté hors <code>AddFrameworkData</code> doit en revanche déclarer
+        <code>AddInterceptors(new AuditSaveChangesInterceptor(session, horloge))</code> pour tracer.</td></tr>
       <tr><td>Matrice des rôles</td><td><code>services.AddSingleton&lt;IMatriceRoles&gt;(_ =&gt; maMatrice)</code> — remplace
         <code>MatriceParDefaut.Creer()</code> dans <code>App.xaml.cs</code>.</td></tr>
       <tr><td>Écrans</td><td><code>ShellViewModel._tousLesItems</code> (avec la permission requise), <code>DataTemplate</code>

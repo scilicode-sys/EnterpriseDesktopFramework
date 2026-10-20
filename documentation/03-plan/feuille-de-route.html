@@ -15,8 +15,8 @@
     <p class="lede">Ce qui est livré, commit par commit&nbsp;; ce qui reste, avec pour chaque brique
       son critère d'acceptation et son dépendance. Une page à re-dater à chaque tour.</p>
     <div class="meta">
-      <span>HEAD&nbsp;: <b>4806340</b> — <code>origin/main</code> en retrait&nbsp;: le push reste sur ordre de l&#39;Exploitant</span>
-      <span>Tests&nbsp;: <b>207 au vert</b></span>
+      <span>HEAD&nbsp;: <b>f004c39</b> — <code>origin/main</code> en retrait&nbsp;: le push reste sur ordre de l&#39;Exploitant</span>
+      <span>Tests&nbsp;: <b>213 au vert</b></span>
       <span>Build&nbsp;: <b>Release 0 erreur / 0 avertissement</b></span>
     </div>
   </header>
@@ -98,6 +98,14 @@
       <tr><td><code>4806340</code></td><td>Documentation&nbsp;: crash et règle n° 9 consignés</td><td><b>207</b></td>
         <td>Ligne T5 réécrite, 24ᵉ piège, panne «&nbsp;liaison TwoWay sur propriété en lecture seule&nbsp;» dans
           le démarrage d'un poste, blueprint à 207, index 1.6. L'exploitant a rejoué T5 sur ce build&nbsp;: voir §5.</td></tr>
+      <tr><td><code>f004c39</code></td><td>Audit traçable&nbsp;: qui a écrit, pas seulement quand</td><td><b>213</b></td>
+        <td>Brique P0 du rapport d'audit «&nbsp;cas école&nbsp;». <code>CreatedBy</code>, <code>UpdatedBy</code> et
+          <code>DeletedBy</code> entrent dans les conventions de domaine&nbsp;; <code>AuditSaveChangesInterceptor</code>
+          devient la <b>seule</b> source de l'audit (l'écriture était dans <code>FrameworkDbContext.SaveChanges</code>
+          et ne nommait personne), branché par <code>AddFrameworkData</code>. Six colonnes <code>varchar(64)</code>
+          nulla ajoutées par la migration <code>AuditEnBase</code> — <b>échafaudée, non appliquée</b>&nbsp;: la base de
+          jeu attend l'ordre de l'Exploitant. Six tests, dont un espion de <code>IsModified</code> (le piège
+          d'après-<code>DetectChanges</code>) et une preuve négative&nbsp;: un contexte monté à la main ne trace rien.</td></tr>
     </tbody>
   </table>
 
@@ -124,8 +132,12 @@
       <tr><td>P5</td><td>Industrialiser le trigger de synchro</td><td>moyenne</td><td>—</td>
         <td>Ajouter une table ne doit plus dépendre d'une ligne de SQL recopiée à la main dans une migration&nbsp;:
           un helper ou un contrôle automatise et <b>échoue au build</b> si une table partagée n'a pas son trigger.</td></tr>
-      <tr><td>P6</td><td>Journal d'audit à l'écran</td><td>faible</td><td>P1</td>
-        <td>Qui a changé quoi et quand, en lecture seule, sur la base des colonnes d'audit déjà présentes.</td></tr>
+      <tr><td>P6</td><td>Journal d'audit à l'écran</td><td>faible&nbsp;pour&nbsp;le&nbsp;cadre</td><td>P1&nbsp;·&nbsp;colonnes signées (acquis <code>f004c39</code>)</td>
+        <td>Qui a changé quoi, <b>quand et sous quel identifiant</b>, en lecture seule. La moitié «&nbsp;données&nbsp;»
+          est faite&nbsp;: <code>AuditSaveChangesInterceptor</code> signe chaque écriture et chaque radiation. Il ne
+          reste que l'écran. Le rapport «&nbsp;cas école&nbsp;» du 20/10/2026 en fait une priorité <b>haute</b> dès
+          qu'un produit journalise des notes ou des encaissements — la hiérarchisation reste à trancher avec
+          l'Exploitant.</td></tr>
       <tr><td>P7</td><td>Tests d'intégration sur PostgreSQL réel</td><td>faible&nbsp;pour&nbsp;le&nbsp;cadre</td><td>plus&nbsp;rien&nbsp;de&nbsp;bloquant</td>
         <td>Le SQL natif du trigger et le LISTEN/NOTIFY sortent du champ InMemory. Un serveur est
           joignable depuis le 19/10/2026&nbsp;: il reste à décider si le cadre embarque une suite qui
@@ -182,15 +194,15 @@
   <table>
     <thead><tr><th style="width:38%">Page</th><th style="width:14%">Statut</th><th>Dernier alignement</th></tr></thead>
     <tbody>
-      <tr><td><code>Framework_Blueprint.md</code> (racine)</td><td><span class="statut livre">à jour</span></td><td>3e60455</td></tr>
+      <tr><td><code>Framework_Blueprint.md</code> (racine)</td><td><span class="statut livre">à jour</span></td><td>f004c39 — dix règles, interceptor d'audit, commande <code>dotnet ef</code> corrigée</td></tr>
       <tr><td><a href="../index.html">index</a> + <a href="../README.md">README</a></td>
-        <td><span class="statut livre">à jour</span></td><td>3e60455</td></tr>
-      <tr><td><a href="../01-structure/architecture.html">01 · architecture</a></td><td><span class="statut livre">à jour</span></td><td>3e60455</td></tr>
-      <tr><td><a href="../02-tutoriels/demarrage-d-un-poste.html">02 · démarrage d'un poste</a></td><td><span class="statut livre">à jour</span></td><td>3e60455 — section «&nbsp;Donner des collègues à ce poste&nbsp;»</td></tr>
-      <tr><td><a href="../02-tutoriels/nouveau-produit.html">02 · nouveau produit</a></td><td><span class="statut livre">à jour</span></td><td>871c7ea</td></tr>
-      <tr><td><a href="../02-tutoriels/ajouter-ecran-metier.html">02 · ajouter un écran métier</a></td><td><span class="statut livre">à jour</span></td><td>871c7ea</td></tr>
-      <tr><td><a href="cahier-des-charges.html">03 · cahier des charges</a></td><td><span class="statut livre">à jour</span></td><td>871c7ea (EF-11 livré) · aligné 3e60455</td></tr>
-      <tr><td><a href="feuille-de-route.html">03 · feuille de route</a></td><td><span class="statut livre">à jour</span></td><td>3e60455</td></tr>
+        <td><span class="statut livre">à jour</span></td><td>f004c39 — index 1.8, 213 tests, vingt-sept pièges</td></tr>
+      <tr><td><a href="../01-structure/architecture.html">01 · architecture</a></td><td><span class="statut livre">à jour</span></td><td>f004c39 — <code>AuditSaveChangesInterceptor</code> entre dans la table des briques</td></tr>
+      <tr><td><a href="../02-tutoriels/demarrage-d-un-poste.html">02 · démarrage d'un poste</a></td><td><span class="statut livre">à jour</span></td><td>f004c39 — <code>database update</code> applique deux migrations</td></tr>
+      <tr><td><a href="../02-tutoriels/nouveau-produit.html">02 · nouveau produit</a></td><td><span class="statut livre">à jour</span></td><td>871c7ea · aligné f004c39</td></tr>
+      <tr><td><a href="../02-tutoriels/ajouter-ecran-metier.html">02 · ajouter un écran métier</a></td><td><span class="statut livre">à jour</span></td><td>f004c39 — commande de migration corrigée, audit déclaré dans les tests</td></tr>
+      <tr><td><a href="cahier-des-charges.html">03 · cahier des charges</a></td><td><span class="statut livre">à jour</span></td><td>871c7ea (EF-11 livré) · aligné f004c39 (213 tests)</td></tr>
+      <tr><td><a href="feuille-de-route.html">03 · feuille de route</a></td><td><span class="statut livre">à jour</span></td><td>f004c39</td></tr>
       <tr><td><a href="../04-manuel-test/plan-de-qualification.html">04 · plan de qualification</a></td>
         <td><span class="statut en-cours">entamé</span></td>
         <td>T0 et T1 joués le 19/10/2026 sur <code>Framework_Test</code>&nbsp;; trois anomalies relevées,
@@ -206,13 +218,15 @@
           la grille&nbsp;: pour T4, la sidebar filtrée, les boutons grisés et le refus en session «&nbsp;Comptable&nbsp;»
           (rôle inconnu) n'ont pas été détaillés. Restent <b>sans verdict</b>&nbsp;:
           T3 (deux postes, anti-écho), T6 (panne, gel brute-force), la dernière ligne de T7 (second poste ouvert
-          sur Comptes) et le second regard de T2 sur l'écran Exemples. Le détail écran par écran reste à saisir
-          dans la fiche de recette, qui appartient à l'exploitant.</td></tr>
+          sur Comptes) et le second regard de T2 sur l'écran Exemples. <b>Nouveau depuis <code>f004c39</code></b>&nbsp;:
+          les lignes d'audit de T0, T2 et T7 ne peuvent pas être jouées tant que <code>AuditEnBase</code> n'est pas
+          appliquée sur <code>Framework_Test</code> — et son application reste un ordre de l'Exploitant.
+          Le détail écran par écran reste à saisir dans la fiche de recette, qui appartient à l'exploitant.</td></tr>
       <tr><td><a href="../04-manuel-test/fiche-de-recette.html">04 · fiche de recette</a></td>
         <td><span class="statut en-cours">à remplir par l'exploitant</span></td>
         <td>les trois anomalies du soir ne valent pas recette&nbsp;: la fiche reste à saisir</td></tr>
       <tr><td><a href="../05-qualite/conventions-et-pieges.html">05 · conventions et pièges</a></td>
-        <td><span class="statut livre">à jour</span></td><td>3e60455 — vingt-quatrième piège et règle n° 9</td></tr>
+        <td><span class="statut livre">à jour</span></td><td>f004c39 — trois pièges de plus (25ᵉ à 27ᵉ) et règle n° 10</td></tr>
     </tbody>
   </table>
 

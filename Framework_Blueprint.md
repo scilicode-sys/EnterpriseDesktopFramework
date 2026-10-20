@@ -37,6 +37,10 @@ copier/renommer →  entités + contexte →   migrations + synchro →  premier
    }
    ```
    Déclarer à la composition root : `services.AddFrameworkData<AutoEcoleDbContext>();`
+   L'audit d'écriture vient avec la déclaration : `AddFrameworkData` branche
+   `AuditSaveChangesInterceptor`, qui date **et signe** chaque ligne de la session
+   courante (`CreatedBy`, `UpdatedBy`, `DeletedBy`). Rien à écrire dans l'écran,
+   et rien à ajouter dans le contexte du produit.
 3. **30 min — base et temps réel.** Base créée par l'**assistant réseau** au
    premier lancement (il teste, crée la base si absente, écrit les réglages).
    La migration `Initial` du socle est **déjà fournie** dans
@@ -49,7 +53,9 @@ copier/renommer →  entités + contexte →   migrations + synchro →  premier
    dotnet ef database update   --project Framework.Data    # applique + trigger
    ```
    Nouvelle table du produit ? `dotnet ef migrations add AjoutEleves --project
-   Framework.Data --startup-project Framework.WPF`, puis dans la migration :
+   Framework.Data` — **sans** `--startup-project` (mesuré le 20/10/2026 : l'outil
+   répond `Your startup project 'FrameworkDemo' doesn't reference
+   Microsoft.EntityFrameworkCore.Design`), puis dans la migration :
    `migrationBuilder.Sql(SyncNotifySql.Script("framework_sync", new[] { "Eleves" }));`
    **Attention** : `migrations remove` + `migrations add` écrase le SQL du
    trigger ajouté à la main dans `Initial` — le remettre dans la foulée, sinon
@@ -89,7 +95,7 @@ Framework.sln
 ├── Framework.Data      net8.0          EF Core 9 + Npgsql — sans UI
 ├── Framework.Common    net8.0-windows  réglages, chiffrement, licence, Velopack, Sentry, PDF/CSV
 ├── Framework.WPF       net8.0-windows  shell : hôte DI, navigation, thème, écrans
-└── Framework.Tests     net8.0-windows  207 tests xUnit — dont le rendu XAML des écrans
+└── Framework.Tests     net8.0-windows  213 tests xUnit — dont le rendu XAML des écrans
 ```
 
 Dépendances toujours dans ce sens : `WPF → Common → Core` et `WPF → Data → Core`.
@@ -97,7 +103,7 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
 
 | Brique | Pièce | Rôle |
 |---|---|---|
-| Core | `IEntity`, `IAuditableEntity`, `ISoftDeletableEntity` | conventions de domaine reconnues par le contexte |
+| Core | `IEntity`, `IAuditableEntity`, `ISoftDeletableEntity` | conventions de domaine reconnues par l'interceptor d'audit : `CreatedAt/CreatedBy`, `UpdatedAt/UpdatedBy`, `DeletedAt/DeletedBy` — l'auteur est une chaîne **libre**, c'est la session qui le fournit |
 | Core | `IGenericRepository<T>`, `IUnitOfWork` | dépôts génériques + frontière d'écriture unique |
 | Core | `SchemaNonInstalleException` | « base joignable, tables absentes » n'est **pas** une panne réseau : diagnostic distinct, message porteur, sans aucun élément de connexion |
 | Core | `ISyncNotificationService`, `SyncNotificationDto` | contrat temps réel inter-postes |
@@ -106,12 +112,13 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
 | Core | `MatriceParDefaut` | trois rôles de départ (Administrateur / Utilisateur / Lecteur) : le produit remplace, il ne commente pas |
 | Core | `IAutorisationService`, `AutorisationRefuseeException` | droits de la session courante : `Peut()` pour la vue, `Exiger()` pour l'écriture |
 | Core | `PasswordHasher` | PBKDF2-SHA256 150 000 itérations, temps constant |
-| Data | `FrameworkDbContext` | clés = `Id`, audit au SaveChanges, DELETE → suppression logique + filtre global, configurations par assembly |
+| Data | `FrameworkDbContext` | clés = `Id`, configurations par assembly, filtre global de suppression logique, colonnes d'auteur de **toutes** les entités bornées à `varchar(64)` |
+| Data | `AuditSaveChangesInterceptor` | **une seule source pour l'audit** : chaque écriture est datée *et* signée par la session courante, un `Remove` devient une radiation nommée (jamais une fausse modification), les heures viennent d'`IHorloge`, et le tout est branché par `AddFrameworkData` — un contexte monté à la main ne trace plus rien |
 | Data | `GenericRepository<T>`, `UnitOfWork` | contexte privé par UoW, `ExecuteInTransactionAsync` sous `CreateExecutionStrategy` |
 | Data | `PostgresConnectionResolver` | chaîne de connexion **source unique**, `Actualiser()` à chaud après assistant, test par SQLSTATE en message français, `GarantirBaseAsync` (whitelist du nom de base) |
 | Data | `PostgresSyncListener` | LISTEN/NOTIFY hors pool, battement de cœur 30 s, backoff 1→30 s, anti-écho `sender` |
 | Data | `SyncNotifySql` | fonction plpgsql + trigger AFTER I/U/D par table |
-| Data | `Design/DesignTimeDbContextFactory` + `Migrations/` | **migration `Initial` fournie** (table `Comptes` + trigger de synchro) : l'outil EF lit les réglages de l'assistant, même chaîne d'anti-écho |
+| Data | `Design/DesignTimeDbContextFactory` + `Migrations/` | **migrations fournies** : `Initial` (table `Comptes` + trigger de synchro) et `AuditEnBase` (six colonnes d'auteur `varchar(64)` nulla, purement additive) — l'outil EF lit les réglages de l'assistant, même chaîne d'anti-écho |
 | Data | `ExempleEntity` + `ExempleEntityConfiguration` | table de démonstration du CRUD (libellé, catégorie, montant, note) — à supprimer avec l'écran « Exemples » |
 | Data | `AuthService` | session + anti-force-brute (3 échecs → gel 60 s via `IHorloge`), amorce du premier compte |
 | Common | `JsonSettingsService` | `%LocalAppData%\{AppName}\settings.json`, atomique, fichier cabossé = redémarrage à vide |
@@ -131,14 +138,20 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
 | WPF | `DroitsViewModel` + `DroitsView` | écran « Rôles et permissions » : la matrice déroulée, la session courante marquée, les rôles déclarés qui ne mènent à aucun écran signalés, et la ligne « Porté par : 1 compte : stage » qui rattache chaque rôle aux comptes du poste sous `comptes.consulter` (refus → « comptes non listés ici », jamais un « 0 » inventé) |
 | WPF | `ExempleViewModel` + `ExempleView` | **écran CRUD de référence** : liste filtrable, formulaire, suppression logique, Unit of Work par opération, recharge sur notification d'un autre poste, **boutons grisés par le droit ET par l'état** |
 | WPF | `ComptesViewModel` + `ComptesView` + `CompteLigne` | **écran de gestion des comptes** (EF-11) : créer un compte, changer un rôle, désactiver, lever un gel — sans SQL. Empreinte de mot de passe jamais remontée à la vue, liste de rôles fermée par la matrice, identifiant dupliqué refusé avant l'index unique, et **impossibilité de verrouiller sa propre session** (rôle, désactivation, suppression du compte courant refusés) |
-| Tests | `Framework.Tests` | hachage, chiffrement (fichier + DPAPI), licence/HWID complète, réglages, CSV/PDF, resolver + assistant, `AuthService` (gel inclus) sur EF InMemory, fabrique de conception (migrations), écran CRUD de référence, **matrice RBAC + `AutorisationService` + gates des écrans** (dont l'écran Comptes : empreinte seule à la création, gardes du compte courant, gel, suppression logique) |
-| CI | `.github/workflows/framework-ci.yml` | windows-latest : Release build + 207 tests sur tout push touchant le framework |
+| Tests | `Framework.Tests` | hachage, chiffrement (fichier + DPAPI), licence/HWID complète, réglages, CSV/PDF, resolver + assistant, `AuthService` (gel inclus) sur EF InMemory, fabrique de conception (migrations), écran CRUD de référence, **matrice RBAC + `AutorisationService` + gates des écrans** (dont l'écran Comptes : empreinte seule à la création, gardes du compte courant, gel, suppression logique), **interceptor d'audit** (création signée, dernier éditeur nommé, radiation qui ne se déguise pas en modification, hors-session, `IsModified` espionné au moment du save, et preuve négative : un contexte monté à la main ne trace rien) |
+| CI | `.github/workflows/framework-ci.yml` | windows-latest : Release build + 213 tests sur tout push touchant le framework |
 
 ## 2. Règles permanentes du framework
 
 - **Toute écriture passe par `IUnitOfWork`** ; un contexte neuf par écran.
 - **Le temps se lit dans `IHorloge`** — les 60 s de gel et l'expiration de
   licence se testent en avançant l'horloge, jamais en dormant.
+- **L'audit d'écriture est une convention, pas un code d'écran** :
+  `AuditSaveChangesInterceptor` est le seul à dater *et signer* une écriture
+  (créateur, dernier éditeur, auteur de la radiation). Un produit ne remplit
+  jamais `CreatedBy` à la main ; et un `DbContext` monté hors de la DI du poste
+  ne trace **rien** — c'est voulu : la traçabilité se déclare, elle ne se devine
+  plus dans un contexte.
 - **Zéro jargon technique à l'écran** : phrases françaises, trame Npgsql au journal.
 - **Zéro secret en dur** : réglages réseau vides par conception ; la clé HMAC de
   licence appartient au produit, pas au framework. `settings.json`, `bin/`, `obj/`,
@@ -200,7 +213,26 @@ Data et Common ne se référencent jamais entre eux (jonction au composition roo
 - Toujours passer **`--project Framework.Data`** à `dotnet ef` : sans lui, l'outil
   instancie le `DbContext` hors DI (échec `DbContextOptions` non résolu) et
   essaie de monter l'hôte générique de `App.xaml.cs`, qui plante sur la
-  `ResourceDictionary` WPF en conception.
+  `ResourceDictionary` WPF en conception. Et **surtout pas**
+  `--startup-project Framework.WPF` : mesuré le 20/10/2026, l'outil refuse —
+  `Your startup project 'FrameworkDemo' doesn't reference
+  Microsoft.EntityFrameworkCore.Design` — puisque Design vit dans l'assembly des
+  migrations (juste au-dessus). Le QUICK START prescrivait cette commande : il
+  fait échouer le premier produit dérivé sur un point vide de sens.
+- **`SavingChanges` s'exécute *après* la détection des changements d'EF** : écrire
+  `UpdatedAt`/`UpdatedBy` dans l'interceptor ne les fait pas entrer dans l'
+  `UPDATE` — la propriété n'est pas marquée modifiée. Il faut
+  `entry.Property(name).IsModified = true`, sinon la colonne garde sa valeur
+  d'origine et l'écran croit tracer. Le défaut est **invisible sous EF InMemory**
+  (qui écrit toutes les colonnes) : `AuditInterceptorTests` enregistre donc un
+  second interceptor espion qui lit `IsModified` au moment du départ de
+  l'écriture. Mesuré à la création de `AuditSaveChangesInterceptor` (20/10/2026).
+- **Convertir un `DELETE` en radiation ne doit pas le faire passer pour une
+  modification** : `entry.State = EntityState.Modified` avant de poser
+  `IsDeleted` remet `UpdatedAt`/`UpdatedBy` à jour et efface la trace de *qui a
+  rayé*. La radiation a ses propres colonnes (`DeletedAt`/`DeletedBy`) et ne
+  touche pas aux deux autres — `Radiation_NomméeSansSeDéguiserEnModification`
+  l'exige.
 - La fabrique de conception **relit `settings.json`, ne le duplique pas** : sans
   réglages, elle refuse (`InvalidOperationException` en français) au lieu de
   générer une migration sur une base inventée. `Framework.Data` ne peut pas

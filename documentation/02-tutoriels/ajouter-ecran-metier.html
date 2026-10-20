@@ -44,7 +44,9 @@
     public string? Note { get; set; }
 }</code></pre>
     <code>EntityBase</code> apporte <code>Id</code>, <code>CreatedAt</code>, <code>UpdatedAt</code>,
-    <code>IsDeleted</code>, <code>DeletedAt</code>. Ne jamais les redéclarer.
+    <code>CreatedBy</code>, <code>UpdatedBy</code>, <code>IsDeleted</code>, <code>DeletedAt</code> et
+    <code>DeletedBy</code>. Ne jamais les redéclarer — et surtout <b>ne jamais les remplir</b> dans le
+    ViewModel&nbsp;: <code>AuditSaveChangesInterceptor</code> s'en charge et écrirait votre valeur.
   </div></div>
 
   <div class="pas"><div class="n">2</div><div class="c">
@@ -62,8 +64,10 @@ public DbSet&lt;EleveEntity&gt; Eleves =&gt; Set&lt;EleveEntity&gt;();</code></p
 
   <div class="pas"><div class="n">3</div><div class="c">
     <span class="qui qui-agent">Agent</span> <b>La migration, avec le trigger.</b>
-    <pre><code>dotnet ef migrations add AjoutEleves --project Framework.Data --startup-project Framework.WPF</code></pre>
-    Puis, dans le <code>Up</code>&nbsp;:
+    <pre><code>dotnet ef migrations add AjoutEleves --project Framework.Data</code></pre>
+    <b>Sans</b> <code>--startup-project</code> (mesuré le 20/10/2026&nbsp;: l'outil refuse, <code>Your startup
+    project 'FrameworkDemo' doesn't reference Microsoft.EntityFrameworkCore.Design</code> — Design vit dans
+    l'assembly des migrations). Puis, dans le <code>Up</code>&nbsp;:
     <pre><code>migrationBuilder.Sql(SyncNotifySql.Script("framework_sync", new[] { "Eleves" }));</code></pre>
     et dans le <code>Down</code>&nbsp;: <code>DROP TRIGGER IF EXISTS "TX_sync_Eleves" ON "Eleves";</code>
   </div></div>
@@ -110,7 +114,11 @@ public DbSet&lt;EleveEntity&gt; Eleves =&gt; Set&lt;EleveEntity&gt;();</code></p
     validations, création/modification, suppression logique vérifiée en base
     (<code>IgnoreQueryFilters()</code>), notification d'un autre poste, refus d'écriture par rôle non autorisé.
     <code>FakeSession</code> + <code>new AutorisationService(session, matrice)</code> suffisent —
-    aucune base réelle, aucune fenêtre.
+    aucune base réelle, aucune fenêtre. <b>Sauf pour l'audit</b>&nbsp;: un <code>DbContextOptions</code> de test
+    monté à la main ne trace rien. Si le test affirme <code>CreatedAt</code>, <code>UpdatedAt</code> ou
+    <code>DeletedAt</code>, déclarez
+    <code>.AddInterceptors(new AuditSaveChangesInterceptor(session, new FakeHorloge()))</code> —
+    <code>ExempleViewModelTests</code> et <code>ComptesViewModelTests</code> le font&nbsp;: copiez ce modèle.
   </div></div>
 
   <h2>Cinq pièges qui reviennent</h2>

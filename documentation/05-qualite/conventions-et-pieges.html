@@ -17,14 +17,14 @@
       exact, et la correction tenue.</p>
     <div class="meta">
       <span>Source&nbsp;: <code>Framework_Blueprint.md</code> § 2 et § 3</span>
-      <span>Aligné sur&nbsp;: <b>commit 3e60455</b></span>
+      <span>Aligné sur&nbsp;: <b>commit f004c39</b></span>
       <span>Règle&nbsp;: une page HTML qui diverge du blueprint = blueprint régénéré</span>
     </div>
   </header>
 
   <nav class="fils"><a href="../index.html">Accueil</a> › 05 · Qualité › <b>Conventions et pièges</b></nav>
 
-  <h2>1 · Les neuf règles permanentes</h2>
+  <h2>1 · Les dix règles permanentes</h2>
   <table>
     <thead><tr><th style="width:32%">Règle</th><th>Pourquoi elle tient lieu de loi</th></tr></thead>
     <tbody>
@@ -34,6 +34,11 @@
       <tr><td><b>Le temps se lit dans <code>IHorloge</code></b></td>
         <td>Le gel de 60 s et l'expiration de licence se testent en avançant l'horloge, jamais en dormant&nbsp;:
           un test qui dort est un test qui finit par se casser.</td></tr>
+      <tr><td><b>L'audit d'écriture est une convention, pas un code d'écran</b></td>
+        <td><code>AuditSaveChangesInterceptor</code> est le seul à dater <em>et</em> signer une écriture&nbsp;:
+          <code>CreatedBy</code>, <code>UpdatedBy</code>, <code>DeletedBy</code> viennent de la session, jamais
+          d'un ViewModel. Un contexte monté à la main hors de la DI du poste ne trace <b>rien</b>&nbsp;— la
+          traçabilité se déclare, elle ne se devine plus dans un <code>SaveChanges</code>.</td></tr>
       <tr><td><b>Zéro jargon technique à l'écran</b></td>
         <td>Le poste parle français&nbsp;; la trame Npgsql va au journal. Une exception brute affichée
           est un défaut, pas une aide.</td></tr>
@@ -63,8 +68,8 @@
   </table>
 
   <h2>2 · Pièges mesurés — la faute, le symptôme, la correction</h2>
-  <p class="lede">Chaque ligne a été vécue dans ce dépôt. Elles sont ici pour qu'un produit dérivé
-    ne les paie pas deux fois.</p>
+  <p class="lede">Chaque ligne a été vécue dans ce dépôt, ou mesurée pendant que la brique s'écrivait.
+    Elles sont ici pour qu'un produit dérivé ne les paie pas deux fois.</p>
   <table>
     <thead><tr><th style="width:26%">La faute</th><th style="width:34%">Ce qui casse</th><th>La règle tenue</th></tr></thead>
     <tbody>
@@ -193,6 +198,31 @@
           correctif. Audit des autres vues&nbsp;: les seules autres cibles TwoWay par défaut
           (<code>TextBox.Text</code>, <code>CheckBox.IsChecked</code>, <code>ComboBox.SelectedItem</code>)
           liennent des propriétés avec setter.</td></tr>
+      <tr><td>Poser l'audit dans <code>SavingChanges</code> sans marquer les colonnes modifiées</td>
+        <td>L'interceptor écrit bien <code>UpdatedAt</code> et <code>UpdatedBy</code>, mais
+          <code>SavingChanges</code> s'exécute <b>après</b> la détection des changements d'EF&nbsp;: les deux
+          colonnes ne partent pas dans l'<code>UPDATE</code>. L'écran croit tracer, la base garde la valeur
+          précédente. Et <b>EF InMemory écrit toutes les colonnes</b>&nbsp;: un test vert ne voit rien.
+          Repéré à l'écriture de la brique <code>f004c39</code>, avant toute mise en jeu</td>
+        <td><code>entry.Property(nom).IsModified = true</code> pour toute colonne posée après
+          <code>DetectChanges</code>. Tenu par
+          <code>ColonneDaudit_EstMarquéeModifiée_QuandLEcriturePart</code>&nbsp;: un <b>second interceptor
+          espion</b> lit <code>IsModified</code> au départ de l'écriture — seule façon de voir ce défaut sans
+          serveur PostgreSQL. Une colonne absente du modèle doit <b>lever</b>, pas se taire.</td></tr>
+      <tr><td>Rajouter <code>--startup-project Framework.WPF</code> à <code>dotnet ef migrations add</code></td>
+        <td>Mesuré le 20/10/2026&nbsp;: <code>Your startup project 'FrameworkDemo' doesn't reference
+          Microsoft.EntityFrameworkCore.Design.</code> Le blueprint et le tutoriel «&nbsp;ajouter un écran
+          métier&nbsp;» prescrivaient cette commande&nbsp;: le premier produit dérivé qui leur obéit échoue
+          sur un point vide de sens</td>
+        <td><code>--project Framework.Data</code> <b>seul</b>&nbsp;: Design vit dans l'assembly des migrations,
+          jamais dans le projet hôte de l'UI. Les deux pages sont corrigées avec la commande qui passe.</td></tr>
+      <tr><td>Faire de la radiation une simple modification</td>
+        <td><code>entry.State = Modified</code> avant de poser <code>IsDeleted</code>, puis remplir
+          <code>UpdatedAt</code>/<code>UpdatedBy</code>&nbsp;: qui a rayé la ligne devient introuvable, et
+          l'historique raconte une modification qui n'a pas eu lieu</td>
+        <td>La radiation a ses propres colonnes (<code>DeletedAt</code>/<code>DeletedBy</code>) et ne touche
+          pas aux deux autres. <code>Radiation_NomméeSansSeDéguiserEnModification</code> relit la ligne en
+          <code>IgnoreQueryFilters()</code> et exige les deux nil</td></tr>
     </tbody>
   </table>
 

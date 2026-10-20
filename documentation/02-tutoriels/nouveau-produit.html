@@ -16,7 +16,7 @@
       Le cadre fournit la mécanique&nbsp;; le produit écrit sa politique.</p>
     <div class="meta">
       <span>Chrono&nbsp;: <b>20 min · 40 min · 30 min · 30 min</b></span>
-      <span>Version du socle&nbsp;: <b>871c7ea</b></span>
+      <span>Version du socle&nbsp;: <b>f004c39</b></span>
       <span>Objectif&nbsp;: <b>0 erreur en Release</b> à chaque étape</span>
     </div>
   </header>
@@ -35,7 +35,10 @@
       <tr><td>H + 0,35</td><td><span class="qui qui-agent">Agent</span></td>
         <td><b>Le domaine.</b> Entités héritées d'<code>EntityBase</code>, contexte dérivé de
           <code>FrameworkDbContext</code>, configurations par assembly,
-          <code>services.AddFrameworkData&lt;MonProduitDbContext&gt;()</code>.</td></tr>
+          <code>services.AddFrameworkData&lt;MonProduitDbContext&gt;()</code>. L'audit d'écriture vient avec
+          la déclaration&nbsp;: <code>AddFrameworkData</code> branche l'interceptor qui signe chaque ligne de
+          l'identifiant de la session. Un écran du produit qui remplit <code>CreatedBy</code> lui-même se
+          fait écriver.</td></tr>
       <tr><td>H + 1,0</td><td><span class="qui qui-vous">Exploitant</span></td>
         <td><b>Base et temps réel.</b> Assistant réseau au premier lancement, puis
           <code>dotnet ef database update --project Framework.Data</code>. Nouvelle table&nbsp;→

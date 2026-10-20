@@ -17,7 +17,7 @@
       chaque tour de chantier.</p>
     <div class="meta">
       <span>Version&nbsp;: <b>1.0</b></span>
-      <span>Aligné sur&nbsp;: <b>commit 3e60455</b> (20/10/2026)</span>
+      <span>Aligné sur&nbsp;: <b>commit f004c39</b> (20/10/2026)</span>
       <span>Statut&nbsp;: <span class="statut en-cours">vivant</span></span>
     </div>
   </header>
@@ -66,8 +66,8 @@
         <td><b>Les vraies tables métier.</b> <code>ExempleEntity</code> se supprime dès la première
           entité du produit.</td></tr>
       <tr>
-        <td>Une migration <code>Initial</code> fournie et une fabrique de conception qui lit les
-          réglages du poste.</td>
+        <td>Les migrations <code>Initial</code> et <code>AuditEnBase</code> fournies, une fabrique de
+          conception qui lit les réglages du poste, et un interceptor qui signe chaque écriture.</td>
         <td><b>La gestion des comptes.</b> Aucun écran de création de compte&nbsp;: à ce jour,
           l'amorce crée le premier compte Administrateur, et le reste passe par SQL.</td></tr>
       <tr>
@@ -98,8 +98,8 @@
         <td><span class="statut livre">livré</span></td>
         <td>Changement de session = sidebar recalculée ET écran devenu interdit rendu.</td></tr>
       <tr><td>EF-05</td><td>CRUD de référence avec suppression logique</td><td><span class="statut livre">livré</span></td>
-        <td>Un <code>Remove</code> laisse la ligne en base avec <code>IsDeleted</code> et
-          <code>DeletedAt</code>&nbsp;; le filtre global la cache.</td></tr>
+        <td>Un <code>Remove</code> laisse la ligne en base avec <code>IsDeleted</code>,
+          <code>DeletedAt</code> et <code>DeletedBy</code>&nbsp;; le filtre global la cache.</td></tr>
       <tr><td>EF-06</td><td>Synchro temps réel inter-postes avec anti-écho</td><td><span class="statut livre">livré</span></td>
         <td>Le poste émetteur ne recharge pas&nbsp;; les autres si. Deux instances sur la même
           machine suffisent à le prouver.</td></tr>
@@ -125,6 +125,15 @@
         <td><span class="statut a-faire">à faire</span></td>
         <td>Gardé par <code>parametres.gerer</code>&nbsp;; aucune modification sans redémarrage
           hormis le canal.</td></tr>
+      <tr><td>EF-13</td><td>Audit d'écriture&nbsp;: chaque ligne connaît l'auteur de sa dernière écriture</td>
+        <td><span class="statut livre">livré <code>f004c39</code></span></td>
+        <td>Créer, modifier et rayer posent <code>CreatedBy</code> / <code>UpdatedBy</code> /
+          <code>DeletedBy</code> depuis la session courante, sans qu'un écran ou une commande du produit
+          n'écrive ces colonnes&nbsp;; une radiation ne se déguise pas en modification&nbsp;; les heures
+          viennent d'<code>IHorloge</code>. <b>Ce que l'exigence ne promet pas</b>&nbsp;: l'historique complet
+          ligne par ligne (un journal d'écran reste P6) et une base non migrée (la colonne doit exister).
+          Preuves&nbsp;: six tests dont un espion de <code>IsModified</code> et une preuve négative —
+          un contexte monté hors DI ne trace rien.</td></tr>
     </tbody>
   </table>
 
@@ -135,7 +144,7 @@
       <tr><td>EN-01</td><td>Build Release à 0 erreur <b>et</b> 0 avertissement</td>
         <td><span class="qui qui-agent">Agent</span> <code>dotnet build Framework.sln -c Release</code> avant chaque commit.</td></tr>
       <tr><td>EN-02</td><td>Suite automatique 100&nbsp;% verte, sans base réelle</td>
-        <td><span class="qui qui-agent">Agent</span> <code>dotnet test</code>&nbsp;; 207 tests à ce jour, EF InMemory
+        <td><span class="qui qui-agent">Agent</span> <code>dotnet test</code>&nbsp;; 213 tests à ce jour, EF InMemory
           et horloge pilotée uniquement.</td></tr>
       <tr><td>EN-03</td><td>Aucun secret en dur, aucun réglage local committé</td>
         <td><code>.gitignore</code> exclut <code>settings.json</code>, <code>licence.*</code>, <code>bin/</code>,

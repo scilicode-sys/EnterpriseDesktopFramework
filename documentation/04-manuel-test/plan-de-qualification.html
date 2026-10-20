@@ -75,7 +75,9 @@
               sur un poste prêt, sans redémarrage&nbsp;: le resolver relit les réglages à chaud.</td></tr>
           <tr><td><span class="qui qui-outil">Outil</span></td>
             <td><code>dotnet ef database update --project Framework.Data</code></td>
-            <td><code>Initial</code> appliquée&nbsp;: tables <code>Comptes</code> et <code>Exemples</code>.</td></tr>
+            <td>Les deux migrations appliquées&nbsp;: tables <code>Comptes</code> et <code>Exemples</code>
+              (<code>Initial</code>) plus les six colonnes d'auteur <code>varchar(64)</code> nulla
+              (<code>AuditEnBase</code>). <code>__EFMigrationsHistory</code> les nomme toutes les deux.</td></tr>
           <tr><td><span class="qui qui-vous">Exploitant</span></td>
             <td><code>SELECT tgname FROM pg_trigger WHERE tgname LIKE 'TX_sync%';</code></td>
             <td><b>Deux lignes.</b> Sans elles, T3 est impossible — c'est le contrôle le plus important de tout le plan.</td></tr>
@@ -121,12 +123,23 @@
   <div class="fiche">
     <h2>T2 · Écran CRUD de référence</h2>
     <div class="corps">
+      <div class="encadre note"><span class="t">Prérequis des deux lignes d'audit</span>
+        <p>La migration <code>AuditEnBase</code> doit être appliquée — étape 5 du
+          <a href="../02-tutoriels/demarrage-d-un-poste.html">démarrage d'un poste</a>. Sans elle, le poste
+          écrit mais PostgreSQL ne connaît pas la colonne demandée&nbsp;: l'écriture échoue et le message
+          d'écran reste générique. C'est un <b>schéma</b> absent, pas une panne réseau.</p></div>
       <table>
         <thead><tr><th style="width:14%">Qui</th><th style="width:43%">Étape</th><th>Attendu</th></tr></thead>
         <tbody>
           <tr><td><span class="qui qui-vous">Exploitant</span></td>
             <td><b>Nouvelle ligne</b> → libellé <code>Alpha</code>, catégorie <code>Stock</code>, montant <code>1250,50</code>, <b>Enregistrer</b></td>
             <td>La ligne apparaît, formulaire vidé, espace (ex.&nbsp;«&nbsp;<code> Alpha </code>&nbsp;») nettoyé.</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td>
+            <td><b>Modifier</b> cette ligne (changer la catégorie), puis contrôle SQL</td>
+            <td><code>SELECT "Libelle","CreatedBy","UpdatedBy","UpdatedAt" FROM "Exemples";</code>&nbsp;—
+              <code>CreatedBy</code> reste l'auteur de la création, <code>UpdatedBy</code> porte le
+              <b>dernier</b> identifiant de session. Personne n'a rempli ces colonnes à l'écran&nbsp;:
+              c'est l'interceptor <code>f004c39</code>.</td></tr>
           <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Libellé vide → Enregistrer</td>
             <td>«&nbsp;Le libellé est obligatoire.&nbsp;» — rien n'est écrit.</td></tr>
           <tr><td><span class="qui qui-vous">Exploitant</span></td><td>Montant <code>10,123</code></td>
@@ -141,7 +154,9 @@
             <td>Formulaire pré-rempli, titre «&nbsp;Modifier la ligne&nbsp;», «&nbsp;Supprimer la ligne&nbsp;» devient actif.</td></tr>
           <tr><td><span class="qui qui-vous">Exploitant</span></td><td><b>Supprimer la ligne</b>, puis contrôle SQL</td>
             <td>Disparaît de la liste, <b>pas</b> de la base&nbsp;:
-              <code>SELECT "Libelle","IsDeleted","DeletedAt" FROM "Exemples";</code></td></tr>
+              <code>SELECT "Libelle","IsDeleted","DeletedAt","DeletedBy","UpdatedBy" FROM "Exemples";</code> —
+              <code>DeletedBy</code> nomme qui a rayé, et <code>UpdatedBy</code> reste celui de la dernière
+              <b>vraie</b> modification&nbsp;: une radiation ne se déguise pas en édition.</td></tr>
         </tbody>
       </table>
     </div>
@@ -317,6 +332,12 @@
             <td>Refaire la même création avec un mot de passe à 8 caractères, puis deux fois le même identifiant</td>
             <td>Création acceptée la première fois&nbsp;; la seconde dit
               «&nbsp;L'identifiant «&nbsp;stage&nbsp;» est déjà porté par un compte.&nbsp;»</td></tr>
+          <tr><td><span class="qui qui-vous">Exploitant</span></td>
+            <td>Contrôle SQL&nbsp;: <code>SELECT "Username","CreatedBy","UpdatedBy" FROM "Comptes";</code></td>
+            <td><code>stage</code> porte <code>CreatedBy</code> = <b>votre</b> identifiant de session. Le compte
+              d'amorçage, né avant l'écran, garde ce qu'il a&nbsp;: son auteur, ou <code>null</code> si personne
+              n'était connecté — le cadre n'invente jamais un nom. Un <b>Enregistrer</b> sur <code>stage</code>
+              ajoute votre nom dans <code>UpdatedBy</code> sans toucher à <code>CreatedBy</code>.</td></tr>
           <tr><td><span class="qui qui-vous">Exploitant</span></td>
             <td>Sélectionner <code>stage</code>, vider les deux champs mot de passe, <b>Enregistrer</b></td>
             <td>«&nbsp;<code>stage</code> enregistré.&nbsp;» et, surtout, <b>le compte se connecte toujours</b>

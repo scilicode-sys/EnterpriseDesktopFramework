@@ -18,7 +18,7 @@
       <span>Durée&nbsp;: <b>10 min</b>, base déjà créée par l'assistant</span>
       <span>Prérequis&nbsp;: <b>PostgreSQL 14+ joignable</b>, .NET 8 Desktop Runtime</span>
       <span>Renvois&nbsp;: <a href="../04-manuel-test/plan-de-qualification.html">T0, T1 et T7 du plan de qualification</a></span>
-      <span>Aligné sur&nbsp;: <b>commit 3e60455</b></span>
+      <span>Aligné sur&nbsp;: <b>commit f004c39</b></span>
     </div>
   </header>
 
@@ -66,10 +66,13 @@
     <span class="qui qui-vous">Exploitant</span> Dans un terminal, à la racine du dépôt du produit&nbsp;:
     <pre><code>dotnet tool install --global dotnet-ef --version 9.0.10   # une seule fois
 dotnet ef migrations list --project Framework.Data      # contrôle de lecture
-dotnet ef database update --project Framework.Data      # applique Initial + trigger</code></pre>
+dotnet ef database update --project Framework.Data      # applique Initial + AuditEnBase + trigger</code></pre>
     <div class="encadre danger"><span class="t">Toujours</span> passer <code>--project Framework.Data</code>.
     Sans lui l'outil instancie le contexte hors DI et essaie de monter l'hôte de <code>App.xaml.cs</code>,
-    qui plante sur la <code>ResourceDictionary</code> WPF.</div>
+    qui plante sur la <code>ResourceDictionary</code> WPF. <b>Et ne jamais</b> ajouter
+    <code>--startup-project Framework.WPF</code> : mesuré le 20/10/2026, l'outil répond
+    <code>Your startup project 'FrameworkDemo' doesn't reference
+    Microsoft.EntityFrameworkCore.Design</code> — le paquet Design vit dans l'assembly des migrations.</div>
   </div></div>
 
   <div class="pas"><div class="n">6</div><div class="c">
@@ -80,8 +83,15 @@ dotnet ef database update --project Framework.Data      # applique Initial + tri
 -- attendu : Comptes  Exemples  __EFMigrationsHistory
 
 SELECT tgname FROM pg_trigger WHERE tgname LIKE 'TX_sync%';
--- attendu : TX_sync_Comptes  TX_sync_Exemples</code></pre>
-    Deux triggers, ou le temps réel ne marchera jamais et <b>rien ne le dira à l'écran</b>.
+-- attendu : TX_sync_Comptes  TX_sync_Exemples
+
+SELECT table_name, column_name FROM information_schema.columns
+ WHERE table_schema='public' AND column_name IN ('CreatedBy','UpdatedBy','DeletedBy')
+ ORDER BY table_name, column_name;
+-- attendu : trois lignes pour Comptes et trois pour Exemples — la migration AuditEnBase est passée</code></pre>
+    Deux triggers, ou le temps réel ne marchera jamais et <b>rien ne le dira à l'écran</b>. Zéro colonne
+    d'auteur&nbsp;? Les écrans tournent normalement, mais <b>aucune écriture n'est signée</b>&nbsp;: l'audit
+    ne dira jamais qui (<code>AuditEnBase</code> n'a pas été appliquée).
   </div></div>
 
   <div class="pas"><div class="n">7</div><div class="c">
