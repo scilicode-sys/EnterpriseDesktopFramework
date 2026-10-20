@@ -15,7 +15,7 @@
     <p class="lede">Ce qui est livré, commit par commit&nbsp;; ce qui reste, avec pour chaque brique
       son critère d'acceptation et son dépendance. Une page à re-dater à chaque tour.</p>
     <div class="meta">
-      <span>HEAD&nbsp;: <b>3e60455</b> — <code>origin/main</code> en retrait&nbsp;: le push reste sur ordre de l&#39;Exploitant</span>
+      <span>HEAD&nbsp;: <b>4806340</b> — <code>origin/main</code> en retrait&nbsp;: le push reste sur ordre de l&#39;Exploitant</span>
       <span>Tests&nbsp;: <b>207 au vert</b></span>
       <span>Build&nbsp;: <b>Release 0 erreur / 0 avertissement</b></span>
     </div>
@@ -95,6 +95,9 @@
           par défaut — <code>Mode=OneWay</code> posé, audit des autres vues, et surtout sept tests qui
           <b>chargent le vrai XAML</b> sur un thread STA. Le build était vert et les 200 tests au vert&nbsp;:
           rien ne rendait les écrans.</td></tr>
+      <tr><td><code>4806340</code></td><td>Documentation&nbsp;: crash et règle n° 9 consignés</td><td><b>207</b></td>
+        <td>Ligne T5 réécrite, 24ᵉ piège, panne «&nbsp;liaison TwoWay sur propriété en lecture seule&nbsp;» dans
+          le démarrage d'un poste, blueprint à 207, index 1.6. L'exploitant a rejoué T5 sur ce build&nbsp;: voir §5.</td></tr>
     </tbody>
   </table>
 
@@ -193,10 +196,18 @@
         <td>T0 et T1 joués le 19/10/2026 sur <code>Framework_Test</code>&nbsp;; trois anomalies relevées,
           corrigées en <code>d65851a</code>. T7 entamé le 20/10/2026&nbsp;: création d'un Lecteur à l'écran
           <b>jouée et acceptée</b>. Anomalie T5 (bouton «&nbsp;Recharger&nbsp;» sans effet) signalée le
-          20/10/2026, corrigée en <code>48cbb97</code>&nbsp;— <b>à rejouer</b>, avec la ligne «&nbsp;Porté
-          par&nbsp;» ajoutée en <code>25bfcb7</code>. Cette seconde modification a <b>cassé l'ouverture de
-          l'écran</b> (anomalie relevée par l'exploitant le 20/10/2026, corrigée en <code>3e60455</code>)&nbsp;:
-          T5 reste <b>à rejouer sur ce build</b>. T2→T4 et T6 sans verdict.</td></tr>
+          20/10/2026, corrigée en <code>48cbb97</code>&nbsp;; la modification «&nbsp;Porté par&nbsp;» de
+          <code>25bfcb7</code> a <b>cassé l'ouverture de l'écran</b> (<code>XamlParseException</code>), corrigée
+          en <code>3e60455</code>. <b>T5 rejoué le 20/10/2026 sur <code>3e60455</code> et accepté</b> par
+          l'exploitant&nbsp;: «&nbsp;<em>role ok, affichage ok, ajout suppression de ligne ok, test de roles
+          lecture ecriture et droit ok</em>&nbsp;» — soit l'ouverture sans erreur de liaison, la ligne «&nbsp;Porté
+          par&nbsp;», l'ajout et la suppression d'une ligne, et les droits vérifiés en session. Ce verdict est le
+          premier obtenu sur un écran réellement ouvert, pas sur une suite verte. Ce verdict décrit le geste, pas
+          la grille&nbsp;: pour T4, la sidebar filtrée, les boutons grisés et le refus en session «&nbsp;Comptable&nbsp;»
+          (rôle inconnu) n'ont pas été détaillés. Restent <b>sans verdict</b>&nbsp;:
+          T3 (deux postes, anti-écho), T6 (panne, gel brute-force), la dernière ligne de T7 (second poste ouvert
+          sur Comptes) et le second regard de T2 sur l'écran Exemples. Le détail écran par écran reste à saisir
+          dans la fiche de recette, qui appartient à l'exploitant.</td></tr>
       <tr><td><a href="../04-manuel-test/fiche-de-recette.html">04 · fiche de recette</a></td>
         <td><span class="statut en-cours">à remplir par l'exploitant</span></td>
         <td>les trois anomalies du soir ne valent pas recette&nbsp;: la fiche reste à saisir</td></tr>
